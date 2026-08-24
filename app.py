@@ -2,7 +2,7 @@ from flask import Flask, jsonify, render_template, request, redirect, url_for, s
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from config import Config
-from models import db, User, AssessmentAttempt
+from models import db, User, AssessmentAttempt, Question
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -182,10 +182,121 @@ def dashboard():
         rank=rank
     )
 
-# Placeholder routes for other features to prevent routing errors
+# Decorator for admin route protection
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in to access this page.', 'danger')
+            return redirect(url_for('login'))
+        if session.get('role') != 'admin':
+            flash('Access denied. Admin portal only.', 'danger')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Admin Routes
 @app.route('/admin/dashboard')
+@admin_required
 def admin_dashboard():
-    return jsonify({"message": "Admin dashboard is under development (Work Item 3)."}), 200
+    questions = Question.query.order_by(Question.id.desc()).all()
+    return render_template('admin/dashboard.html', questions=questions)
+
+@app.route('/admin/questions/add/mcq', methods=['GET', 'POST'])
+@admin_required
+def add_mcq():
+    if request.method == 'POST':
+        question_text = request.form.get('question_text', '').strip()
+        option_a = request.form.get('option_a', '').strip()
+        option_b = request.form.get('option_b', '').strip()
+        option_c = request.form.get('option_c', '').strip()
+        option_d = request.form.get('option_d', '').strip()
+        correct_answer = request.form.get('correct_answer', '').strip()
+        marks = int(request.form.get('marks', 1))
+        
+        if not question_text or not option_a or not option_b or not option_c or not option_d or not correct_answer:
+            flash('All fields are required for MCQ questions.', 'danger')
+            return render_template('admin/mcq_form.html')
+            
+        new_q = Question(
+            question_text=question_text,
+            question_type='mcq',
+            option_a=option_a,
+            option_b=option_b,
+            option_c=option_c,
+            option_d=option_d,
+            correct_answer=correct_answer,
+            marks=marks
+        )
+        db.session.add(new_q)
+        db.session.commit()
+        flash('MCQ Question added successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+        
+    return render_template('admin/mcq_form.html', question=None)
+
+@app.route('/admin/questions/add/coding', methods=['GET', 'POST'])
+@admin_required
+def add_coding():
+    if request.method == 'POST':
+        question_text = request.form.get('question_text', '').strip()
+        marks = int(request.form.get('marks', 1))
+        
+        if not question_text:
+            flash('Problem description is required.', 'danger')
+            return render_template('admin/coding_form.html')
+            
+        new_q = Question(
+            question_text=question_text,
+            question_type='coding',
+            marks=marks
+        )
+        db.session.add(new_q)
+        db.session.commit()
+        flash('Coding Question added successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+        
+    return render_template('admin/coding_form.html', question=None)
+
+@app.route('/admin/questions/edit/<int:question_id>', methods=['GET', 'POST'])
+@admin_required
+def edit_question(question_id):
+    question = Question.query.get_or_404(question_id)
+    
+    if request.method == 'POST':
+        question.question_text = request.form.get('question_text', '').strip()
+        question.marks = int(request.form.get('marks', 1))
+        
+        if question.question_type == 'mcq':
+            question.option_a = request.form.get('option_a', '').strip()
+            question.option_b = request.form.get('option_b', '').strip()
+            question.option_c = request.form.get('option_c', '').strip()
+            question.option_d = request.form.get('option_d', '').strip()
+            question.correct_answer = request.form.get('correct_answer', '').strip()
+            
+            if not question.question_text or not question.option_a or not question.option_b or not question.option_c or not question.option_d or not question.correct_answer:
+                flash('All fields are required.', 'danger')
+                return render_template('admin/mcq_form.html', question=question)
+        else:
+            if not question.question_text:
+                flash('Problem description is required.', 'danger')
+                return render_template('admin/coding_form.html', question=question)
+                
+        db.session.commit()
+        flash('Question updated successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+        
+    template = 'admin/mcq_form.html' if question.question_type == 'mcq' else 'admin/coding_form.html'
+    return render_template(template, question=question)
+
+@app.route('/admin/questions/delete/<int:question_id>', methods=['POST'])
+@admin_required
+def delete_question(question_id):
+    question = Question.query.get_or_404(question_id)
+    db.session.delete(question)
+    db.session.commit()
+    flash('Question deleted successfully!', 'success')
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/take_assessment')
 @student_required

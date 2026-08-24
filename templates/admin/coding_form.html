@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if question else 'Add' }} Coding Question - CodeEval{% endblock %}
+
+{% block content %}
+<div class="form-card" style="max-width: 600px;">
+    <h2 class="form-title">{{ 'Edit' if question else 'Add New' }} Coding Question</h2>
+    <p class="form-subtitle" style="margin-bottom: 24px;">Configure programming problem details below</p>
+    
+    <form action="{{ url_for('edit_question', question_id=question.id) if question else url_for('add_coding') }}" method="POST">
+        <div class="form-group">
+            <label for="question_text" class="form-label">Problem Description</label>
+            <textarea id="question_text" name="question_text" class="form-control" rows="8" placeholder="Describe the problem, input/output formats, constraints, and test cases..." required>{{ question.question_text if question else '' }}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="marks" class="form-label">Marks / Score Points</label>
+            <input type="number" id="marks" name="marks" class="form-control" min="1" max="100" value="{{ question.marks if question else '1' }}" required>
+        </div>
+        
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Save Question</button>
+            <a href="/admin/dashboard" class="btn btn-secondary" style="flex: 1;">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

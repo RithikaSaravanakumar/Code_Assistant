@@ -99,7 +99,7 @@ Make sure you have a local MySQL instance running. The schema tables are initial
 - [x] Project setup
 - [x] MySQL database
 - [x] Student authentication
-- [ ] Admin question management
+- [x] Admin question management
 - [ ] MCQ assessment
 - [ ] Timer
 - [ ] Automatic evaluation
