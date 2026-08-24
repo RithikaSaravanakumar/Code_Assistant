@@ -7,10 +7,15 @@
     <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 40px; box-shadow: var(--shadow-lg);">
         
         <!-- Header / Progress Info -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <span style="font-size: 14px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
-                MCQ Assessment
-            </span>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 14px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+                    MCQ Assessment
+                </span>
+                <span id="timer-display" style="font-size: 14px; font-weight: 700; color: var(--warning); background-color: var(--warning-light); padding: 4px 12px; border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    10:00
+                </span>
+            </div>
             <span id="progress-text" style="font-size: 15px; font-weight: 700; color: var(--primary);">
                 Question 1 of {{ questions|length }}
             </span>
@@ -93,6 +98,64 @@
     const totalSteps = {{ questions|length }};
     const storageKey = 'assessment_answers_' + {{ attempt.id }};
 
+    // Timer setup
+    const durationMs = 600 * 1000; // 10 minutes
+    const startedAtMs = {{ started_at_ms }};
+    const serverNowMs = {{ server_now_ms }};
+    const clientServerOffset = Date.now() - serverNowMs;
+
+    function getCorrectedNow() {
+        return Date.now() - clientServerOffset;
+    }
+
+    function initTimer() {
+        const timerDisplay = document.getElementById('timer-display');
+        const form = document.getElementById('assessment-form');
+        let isSubmitted = false;
+
+        const timerInterval = setInterval(() => {
+            const nowMs = getCorrectedNow();
+            const elapsedMs = nowMs - startedAtMs;
+            const remainingMs = durationMs - elapsedMs;
+
+            if (remainingMs <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.innerText = "00:00";
+                
+                if (!isSubmitted) {
+                    isSubmitted = true;
+                    localStorage.removeItem(storageKey);
+                    alert("Time is up! Your assessment will be submitted automatically.");
+                    form.submit();
+                }
+                return;
+            }
+
+            const totalSecs = Math.floor(remainingMs / 1000);
+            const mins = Math.floor(totalSecs / 60);
+            const secs = totalSecs % 60;
+            const timeString = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            timerDisplay.innerText = timeString;
+
+            if (totalSecs < 60) {
+                timerDisplay.style.color = '#ef4444';
+                timerDisplay.style.backgroundColor = 'rgba(239, 68, 68, 0.25)';
+                timerDisplay.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                timerDisplay.style.opacity = (totalSecs % 2 === 0) ? '1' : '0.6';
+            } else {
+                timerDisplay.style.color = 'var(--warning)';
+                timerDisplay.style.backgroundColor = 'var(--warning-light)';
+                timerDisplay.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+                timerDisplay.style.opacity = '1';
+            }
+        }, 1000);
+
+        form.addEventListener('submit', () => {
+            clearInterval(timerInterval);
+            isSubmitted = true;
+        });
+    }
+
     function showStep(step) {
         // Hide all steps
         document.querySelectorAll('.question-step').forEach(el => el.style.display = 'none');
@@ -170,6 +233,7 @@
     window.addEventListener('DOMContentLoaded', () => {
         loadSavedAnswers();
         showStep(1);
+        initTimer();
         
         // Let final progress bar fill up a bit on step 1 to look nice
         document.getElementById('progress-bar').style.width = `${(1 / totalSteps) * 100}%`;

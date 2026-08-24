@@ -309,17 +309,24 @@ def take_assessment():
         return redirect(url_for('dashboard'))
         
     user_id = session['user_id']
-    attempt = AssessmentAttempt(
-        user_id=user_id,
-        score=0.0,
-        total_marks=sum(q.marks for q in questions),
-        percentage=0.0,
-        started_at=datetime.now(timezone.utc)
-    )
-    db.session.add(attempt)
-    db.session.commit()
     
-    return render_template('take_assessment.html', questions=questions, attempt=attempt)
+    # Resume existing unsubmitted attempt if it exists
+    attempt = AssessmentAttempt.query.filter_by(user_id=user_id, submitted_at=None).order_by(AssessmentAttempt.id.desc()).first()
+    
+    if not attempt:
+        attempt = AssessmentAttempt(
+            user_id=user_id,
+            score=0.0,
+            total_marks=sum(q.marks for q in questions),
+            percentage=0.0,
+            started_at=datetime.now(timezone.utc)
+        )
+        db.session.add(attempt)
+        db.session.commit()
+        
+    started_at_ms = int(attempt.started_at.replace(tzinfo=timezone.utc).timestamp() * 1000)
+    server_now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+    return render_template('take_assessment.html', questions=questions, attempt=attempt, server_now_ms=server_now_ms, started_at_ms=started_at_ms)
 
 @app.route('/submit_assessment', methods=['POST'])
 @student_required
