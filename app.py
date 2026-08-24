@@ -420,7 +420,11 @@ def coding_questions():
 @app.route('/history')
 @student_required
 def history():
-    return jsonify({"message": "Attempt history is under development (Work Item 8)."}), 200
+    user_id = session['user_id']
+    attempts = AssessmentAttempt.query.filter_by(user_id=user_id)\
+                                       .filter(AssessmentAttempt.submitted_at != None)\
+                                       .order_by(AssessmentAttempt.submitted_at.desc()).all()
+    return render_template('history.html', attempts=attempts)
 
 @app.route('/leaderboard')
 def leaderboard():

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Attempt History - CodeEval{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 32px;">
+    <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 4px;">Assessment History</h1>
+    <p style="color: var(--text-secondary);">Review your past scorecards and detailed feedback reports.</p>
+</div>
+
+<div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--shadow-lg); margin-bottom: 60px;">
+    {% if attempts %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 15px;">
+                <thead>
+                    <tr style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
+                        <th style="padding: 18px 24px; font-weight: 600;">Attempt ID</th>
+                        <th style="padding: 18px 24px; font-weight: 600;">Date & Time</th>
+                        <th style="padding: 18px 24px; font-weight: 600;">Score</th>
+                        <th style="padding: 18px 24px; font-weight: 600;">Percentage</th>
+                        <th style="padding: 18px 24px; font-weight: 600; text-align: right;">Feedback</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attempt in attempts %}
+                        <tr style="border-bottom: 1px solid var(--border-color); transition: var(--transition-fast);">
+                            <td style="padding: 18px 24px; font-weight: 600; color: var(--text-secondary);">
+                                #{{ attempt.id }}
+                            </td>
+                            <td style="padding: 18px 24px; color: var(--text-primary);">
+                                {{ attempt.submitted_at.strftime('%b %d, %Y at %I:%M %p') }} UTC
+                            </td>
+                            <td style="padding: 18px 24px; font-weight: 600;">
+                                {{ attempt.score }} / {{ attempt.total_marks }}
+                            </td>
+                            <td style="padding: 18px 24px;">
+                                <span style="font-weight: 700; color: 
+                                    {% if attempt.percentage >= 70 %}
+                                        var(--success)
+                                    {% elif attempt.percentage >= 40 %}
+                                        var(--warning)
+                                    {% else %}
+                                        var(--danger)
+                                    {% endif %};">
+                                    {{ "%.1f"|format(attempt.percentage) }}%
+                                </span>
+                            </td>
+                            <td style="padding: 18px 24px; text-align: right;">
+                                <a href="/result/{{ attempt.id }}" class="btn btn-secondary btn-sm">View Report</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="padding: 60px 24px; text-align: center; color: var(--text-secondary);">
+            <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+            <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">No Attempts Found</h3>
+            <p style="font-size: 14px; margin-bottom: 24px;">You haven't completed any MCQ assessments yet.</p>
+            <a href="/take_assessment" class="btn btn-primary">Take Your First Test</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
