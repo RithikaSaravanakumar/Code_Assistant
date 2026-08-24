@@ -1,8 +1,9 @@
+import random
 from flask import Flask, jsonify, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from config import Config
-from models import db, User, AssessmentAttempt, Question, Answer, CodingSubmission
+from models import db, User, AssessmentAttempt, AttemptQuestion, Question, Answer, CodingSubmission
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -303,30 +304,88 @@ from datetime import timezone
 @app.route('/take_assessment')
 @student_required
 def take_assessment():
-    questions = Question.query.filter_by(question_type='mcq').all()
-    if not questions:
+    all_mcq = Question.query.filter_by(question_type='mcq').all()
+    if not all_mcq:
         flash('No multiple choice assessments are available at this time.', 'warning')
         return redirect(url_for('dashboard'))
-        
+
     user_id = session['user_id']
-    
+
     # Resume existing unsubmitted attempt if it exists
-    attempt = AssessmentAttempt.query.filter_by(user_id=user_id, submitted_at=None).order_by(AssessmentAttempt.id.desc()).first()
-    
+    attempt = AssessmentAttempt.query.filter_by(
+        user_id=user_id, submitted_at=None
+    ).order_by(AssessmentAttempt.id.desc()).first()
+
+    if attempt:
+        # Check if this attempt has AttemptQuestion rows (new format).
+        # If not (legacy attempt), discard it and start fresh.
+        aq_count = AttemptQuestion.query.filter_by(attempt_id=attempt.id).count()
+        if aq_count == 0:
+            db.session.delete(attempt)
+            db.session.commit()
+            attempt = None
+
     if not attempt:
+        # --- NEW ATTEMPT: randomly select 20 questions and shuffle options ---
+        QUESTIONS_PER_ATTEMPT = 20
+        selected = random.sample(all_mcq, min(QUESTIONS_PER_ATTEMPT, len(all_mcq)))
+        random.shuffle(selected)  # randomise question order
+
         attempt = AssessmentAttempt(
             user_id=user_id,
             score=0.0,
-            total_marks=sum(q.marks for q in questions),
+            total_marks=sum(q.marks for q in selected),
             percentage=0.0,
             started_at=datetime.now(timezone.utc)
         )
         db.session.add(attempt)
+        db.session.flush()  # obtain attempt.id before inserting AttemptQuestion rows
+
+        labels = ['A', 'B', 'C', 'D']
+        for idx, q in enumerate(selected):
+            # Original option texts in positional order
+            orig_opts = [q.option_a, q.option_b, q.option_c, q.option_d]
+            orig_correct_idx = labels.index(q.correct_answer)  # 0-3
+
+            # Shuffle the four positional indices
+            positions = [0, 1, 2, 3]
+            random.shuffle(positions)
+
+            # Build shuffled option texts
+            shuffled_opts = [orig_opts[p] for p in positions]
+
+            # Find where the originally-correct option ended up after shuffle
+            new_correct_pos = positions.index(orig_correct_idx)
+            new_correct_label = labels[new_correct_pos]
+
+            aq = AttemptQuestion(
+                attempt_id=attempt.id,
+                question_id=q.id,
+                order_index=idx + 1,
+                opt_a_text=shuffled_opts[0],
+                opt_b_text=shuffled_opts[1],
+                opt_c_text=shuffled_opts[2],
+                opt_d_text=shuffled_opts[3],
+                correct_label=new_correct_label
+            )
+            db.session.add(aq)
+
         db.session.commit()
-        
+
+    # Load persisted attempt questions (same set on every refresh)
+    attempt_questions = AttemptQuestion.query.filter_by(
+        attempt_id=attempt.id
+    ).order_by(AttemptQuestion.order_index).all()
+
     started_at_ms = int(attempt.started_at.replace(tzinfo=timezone.utc).timestamp() * 1000)
     server_now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
-    return render_template('take_assessment.html', questions=questions, attempt=attempt, server_now_ms=server_now_ms, started_at_ms=started_at_ms)
+    return render_template(
+        'take_assessment.html',
+        attempt_questions=attempt_questions,
+        attempt=attempt,
+        server_now_ms=server_now_ms,
+        started_at_ms=started_at_ms
+    )
 
 @app.route('/submit_assessment', methods=['POST'])
 @student_required
@@ -335,74 +394,97 @@ def submit_assessment():
     if not attempt_id:
         flash('Invalid attempt ID.', 'danger')
         return redirect(url_for('dashboard'))
-        
+
     attempt = AssessmentAttempt.query.get(attempt_id)
     if not attempt or attempt.submitted_at is not None:
         flash('This assessment attempt has already been submitted or is invalid.', 'warning')
         return redirect(url_for('dashboard'))
-        
-    questions = Question.query.filter_by(question_type='mcq').all()
+
+    # Load the 20 AttemptQuestion rows assigned to this specific attempt
+    attempt_questions = AttemptQuestion.query.filter_by(attempt_id=attempt.id).all()
+
     score = 0.0
     total_marks = 0
-    
-    for q in questions:
-        selected_val = request.form.get(f'q_{q.id}')
+
+    for aq in attempt_questions:
+        # Form field name uses aq.id so there is no collision across attempts
+        selected_val = request.form.get(f'aq_{aq.id}')
         if selected_val:
             selected_val = selected_val.strip()
-            
-        is_correct = (selected_val == q.correct_answer)
-        total_marks += q.marks
+
+        # Evaluate against the remapped correct label stored for this attempt
+        is_correct = (selected_val == aq.correct_label)
+        total_marks += aq.question.marks
         if is_correct:
-            score += q.marks
-            
+            score += aq.question.marks
+
         ans = Answer(
             attempt_id=attempt.id,
-            question_id=q.id,
+            question_id=aq.question_id,
             selected_answer=selected_val,
             is_correct=is_correct
         )
         db.session.add(ans)
-        
+
     attempt.score = score
     attempt.total_marks = total_marks
     attempt.percentage = (score / total_marks * 100) if total_marks > 0 else 0.0
     attempt.submitted_at = datetime.now(timezone.utc)
     db.session.commit()
-    
-    flash(f'Assessment submitted! You scored {score}/{total_marks} ({attempt.percentage:.1f}%).', 'success')
+
+    flash(f'Assessment submitted! You scored {int(score)}/{total_marks} ({attempt.percentage:.1f}%).', 'success')
     return redirect(url_for('result', attempt_id=attempt.id))
 
 @app.route('/result/<int:attempt_id>')
 @login_required
 def result(attempt_id):
     attempt = AssessmentAttempt.query.get_or_404(attempt_id)
-    
+
     # Security check: only own attempt or admin
     if session.get('role') != 'admin' and attempt.user_id != session.get('user_id'):
         flash('Access denied. You cannot view this assessment result.', 'danger')
         return redirect(url_for('dashboard'))
-        
-    answers = Answer.query.filter_by(attempt_id=attempt_id).all()
-    correct_count = sum(1 for a in answers if a.is_correct)
-    unanswered_count = sum(1 for a in answers if not a.selected_answer)
-    incorrect_count = len(answers) - correct_count - unanswered_count
-    
+
+    # Load the attempt's 20 questions with their shuffled option layout
+    attempt_qs = AttemptQuestion.query.filter_by(
+        attempt_id=attempt_id
+    ).order_by(AttemptQuestion.order_index).all()
+
+    # Build a map of question_id -> Answer for O(1) lookup
+    answers_map = {
+        a.question_id: a
+        for a in Answer.query.filter_by(attempt_id=attempt_id).all()
+    }
+
+    correct_count = 0
+    incorrect_count = 0
+    unanswered_count = 0
     question_details = []
-    for a in answers:
-        q = Question.query.get(a.question_id)
-        if q:
-            question_details.append({
-                'question_text': q.question_text,
-                'option_a': q.option_a,
-                'option_b': q.option_b,
-                'option_c': q.option_c,
-                'option_d': q.option_d,
-                'correct_answer': q.correct_answer,
-                'selected_answer': a.selected_answer,
-                'is_correct': a.is_correct,
-                'marks': q.marks
-            })
-            
+
+    for aq in attempt_qs:
+        ans = answers_map.get(aq.question_id)
+        selected = ans.selected_answer if ans else None
+        is_correct = ans.is_correct if ans else False
+
+        if not selected:
+            unanswered_count += 1
+        elif is_correct:
+            correct_count += 1
+        else:
+            incorrect_count += 1
+
+        question_details.append({
+            'question_text': aq.question.question_text,
+            'opt_a_text': aq.opt_a_text,
+            'opt_b_text': aq.opt_b_text,
+            'opt_c_text': aq.opt_c_text,
+            'opt_d_text': aq.opt_d_text,
+            'correct_label': aq.correct_label,
+            'selected_answer': selected,
+            'is_correct': is_correct,
+            'marks': aq.question.marks,
+        })
+
     return render_template(
         'result.html',
         attempt=attempt,
@@ -513,16 +595,16 @@ if __name__ == '__main__':
         # Seed default admin user
         admin_user = User.query.filter_by(role='admin').first()
         if not admin_user:
-            admin_pw = generate_password_hash('adminpassword')
+            admin_pw = generate_password_hash('Rithika@123')
             new_admin = User(
-                username='admin',
-                email='admin@codeeval.com',
+                username='rithikaadmin',
+                email='rithikaas005@gmail.com',
                 password_hash=admin_pw,
                 role='admin'
             )
             db.session.add(new_admin)
             db.session.commit()
-            print("Default admin user created: admin@codeeval.com / adminpassword")
+            print("Default admin user created")
         else:
             print("Admin user already exists.")
             

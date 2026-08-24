@@ -13,11 +13,11 @@
                     MCQ Assessment
                 </span>
                 <span id="timer-display" style="font-size: 14px; font-weight: 700; color: var(--warning); background-color: var(--warning-light); padding: 4px 12px; border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.3);">
-                    10:00
+                    20:00
                 </span>
             </div>
             <span id="progress-text" style="font-size: 15px; font-weight: 700; color: var(--primary);">
-                Question 1 of {{ questions|length }}
+                Question 1 of {{ attempt_questions|length }}
             </span>
         </div>
         
@@ -30,44 +30,44 @@
         <form id="assessment-form" action="/submit_assessment" method="POST">
             <input type="hidden" name="attempt_id" value="{{ attempt.id }}">
             
-            {% for q in questions %}
+            {% for aq in attempt_questions %}
                 <div class="question-step" data-step="{{ loop.index }}" style="display: {{ 'block' if loop.first else 'none' }};">
                     <div style="margin-bottom: 24px;">
                         <span style="font-size: 13px; font-weight: 700; background-color: var(--primary-light); color: #a5b4fc; padding: 4px 8px; border-radius: 4px; margin-right: 8px;">
                             Q{{ loop.index }}
                         </span>
                         <span style="color: var(--text-muted); font-size: 14px; font-weight: 500;">
-                            ({{ q.marks }} Marks)
+                            ({{ aq.question.marks }} Marks)
                         </span>
                     </div>
                     
                     <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 32px; line-height: 1.4;">
-                        {{ q.question_text }}
+                        {{ aq.question.question_text }}
                     </h3>
                     
                     <div class="options-group" style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px;">
                         <label class="option-label" style="display: flex; align-items: center; padding: 16px 20px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); cursor: pointer; transition: var(--transition-fast);">
-                            <input type="radio" name="q_{{ q.id }}" value="A" class="option-radio" style="margin-right: 16px; accent-color: var(--primary);" onchange="saveAnswer({{ q.id }}, 'A')">
+                            <input type="radio" name="aq_{{ aq.id }}" value="A" class="option-radio" style="margin-right: 16px; accent-color: var(--primary);" onchange="saveAnswer({{ aq.id }}, 'A')">
                             <span style="font-weight: 600; margin-right: 12px; color: var(--primary);">A.</span>
-                            <span>{{ q.option_a }}</span>
+                            <span>{{ aq.opt_a_text }}</span>
                         </label>
                         
                         <label class="option-label" style="display: flex; align-items: center; padding: 16px 20px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); cursor: pointer; transition: var(--transition-fast);">
-                            <input type="radio" name="q_{{ q.id }}" value="B" class="option-radio" style="margin-right: 16px; accent-color: var(--primary);" onchange="saveAnswer({{ q.id }}, 'B')">
+                            <input type="radio" name="aq_{{ aq.id }}" value="B" class="option-radio" style="margin-right: 16px; accent-color: var(--primary);" onchange="saveAnswer({{ aq.id }}, 'B')">
                             <span style="font-weight: 600; margin-right: 12px; color: var(--primary);">B.</span>
-                            <span>{{ q.option_b }}</span>
+                            <span>{{ aq.opt_b_text }}</span>
                         </label>
                         
                         <label class="option-label" style="display: flex; align-items: center; padding: 16px 20px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); cursor: pointer; transition: var(--transition-fast);">
-                            <input type="radio" name="q_{{ q.id }}" value="C" class="option-radio" style="margin-right: 16px; accent-color: var(--primary);" onchange="saveAnswer({{ q.id }}, 'C')">
+                            <input type="radio" name="aq_{{ aq.id }}" value="C" class="option-radio" style="margin-right: 16px; accent-color: var(--primary);" onchange="saveAnswer({{ aq.id }}, 'C')">
                             <span style="font-weight: 600; margin-right: 12px; color: var(--primary);">C.</span>
-                            <span>{{ q.option_c }}</span>
+                            <span>{{ aq.opt_c_text }}</span>
                         </label>
                         
                         <label class="option-label" style="display: flex; align-items: center; padding: 16px 20px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); cursor: pointer; transition: var(--transition-fast);">
-                            <input type="radio" name="q_{{ q.id }}" value="D" class="option-radio" style="margin-right: 16px; accent-color: var(--primary);" onchange="saveAnswer({{ q.id }}, 'D')">
+                            <input type="radio" name="aq_{{ aq.id }}" value="D" class="option-radio" style="margin-right: 16px; accent-color: var(--primary);" onchange="saveAnswer({{ aq.id }}, 'D')">
                             <span style="font-weight: 600; margin-right: 12px; color: var(--primary);">D.</span>
-                            <span>{{ q.option_d }}</span>
+                            <span>{{ aq.opt_d_text }}</span>
                         </label>
                     </div>
                 </div>
@@ -95,11 +95,11 @@
 {% block scripts %}
 <script>
     let currentStep = 1;
-    const totalSteps = {{ questions|length }};
+    const totalSteps = {{ attempt_questions|length }};
     const storageKey = 'assessment_answers_' + {{ attempt.id }};
 
-    // Timer setup
-    const durationMs = 600 * 1000; // 10 minutes
+    // Timer setup — 20 minutes for 20 questions (1 min per question)
+    const durationMs = 1200 * 1000; // 20 minutes
     const startedAtMs = {{ started_at_ms }};
     const serverNowMs = {{ server_now_ms }};
     const clientServerOffset = Date.now() - serverNowMs;
@@ -190,10 +190,10 @@
         }
     }
 
-    // Save choice to local storage
-    function saveAnswer(qId, val) {
+    // Save choice to local storage (keyed by aq.id)
+    function saveAnswer(aqId, val) {
         let answers = JSON.parse(localStorage.getItem(storageKey)) || {};
-        answers[qId] = val;
+        answers[aqId] = val;
         localStorage.setItem(storageKey, JSON.stringify(answers));
         highlightActiveOptions();
     }
@@ -201,8 +201,8 @@
     // Load choices from local storage
     function loadSavedAnswers() {
         const answers = JSON.parse(localStorage.getItem(storageKey)) || {};
-        for (const [qId, val] of Object.entries(answers)) {
-            const radio = document.querySelector(`input[name="q_${qId}"][value="${val}"]`);
+        for (const [aqId, val] of Object.entries(answers)) {
+            const radio = document.querySelector(`input[name="aq_${aqId}"][value="${val}"]`);
             if (radio) {
                 radio.checked = true;
             }

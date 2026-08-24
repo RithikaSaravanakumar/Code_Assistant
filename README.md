@@ -11,6 +11,8 @@ This platform serves as a modern tool for educators and students. Admins can man
 - **Evaluation System**: Automatic grading of MCQ assessments, calculating percentages, tracking durations, and saving submissions.
 - **Leaderboard**: Displays student rankings based on grading score criteria.
 - **Coding Sandbox MVP**: Allows students to submit code blocks for specific questions and stores them securely.
+- **Question Seeding**: 50 placement-level technical MCQ questions pre-seeded across 11 CS topics.
+- **Randomized Assessments**: Each attempt shows exactly 20 randomly selected questions with shuffled answer options.
 
 ## Technology Stack
 - **Backend**: Python 3, Flask
@@ -36,6 +38,7 @@ Code_Assistant/
 ├── app.py
 ├── config.py
 ├── models.py
+├── seed_questions.py      ← Run once to populate 50 MCQ questions
 ├── requirements.txt
 ├── .env.example
 ├── .gitignore
@@ -78,11 +81,48 @@ Make sure you have a local MySQL instance running. The schema tables are initial
 ## How to Run
 
 1. Make sure your MySQL server is running and the database specified in `.env` exists (or is created automatically).
-2. Start the Flask application:
+2. Start the Flask application (this also auto-creates all DB tables):
    ```bash
    python app.py
    ```
-3. Open your browser and navigate to `http://127.0.0.1:5000`.
+3. **Seed the 50 MCQ questions** (run once; safe to run multiple times):
+   ```bash
+   python seed_questions.py
+   ```
+4. Open your browser and navigate to `http://127.0.0.1:5000`.
+
+## Question Seeding
+
+`seed_questions.py` inserts **50 placement-level technical MCQ questions** covering:
+
+| Topic                    | Count |
+|--------------------------|-------|
+| Python                   | 5     |
+| Java                     | 5     |
+| JavaScript               | 5     |
+| SQL                      | 5     |
+| Data Structures & Algorithms | 5 |
+| Object-Oriented Programming  | 5 |
+| DBMS                     | 4     |
+| Operating Systems        | 4     |
+| Computer Networks        | 4     |
+| HTML / CSS               | 4     |
+| Software Engineering     | 4     |
+| **Total**                | **50** |
+
+The script is **idempotent** — it checks question text for duplicates before inserting and skips if 50+ MCQs already exist.
+
+## Randomized Assessment System
+
+Each time a student starts a new assessment attempt, the system:
+
+1. **Randomly selects 20 questions** from the available 50 MCQ pool.
+2. **Shuffles the question order** so no two attempts have the same sequence.
+3. **Shuffles the answer options** (A/B/C/D positions) independently for each question in each attempt.
+4. **Remaps the correct answer label** to match the shuffled option layout, ensuring evaluation is always accurate.
+5. **Persists the selection** in the `attempt_questions` table — refreshing the page shows the same 20 questions in the same order.
+
+This prevents answer memorisation across attempts while maintaining evaluation correctness.
 
 ## Admin Features
 - Secure admin console routes.
@@ -90,7 +130,7 @@ Make sure you have a local MySQL instance running. The schema tables are initial
 
 ## Student Features
 - Session-based dashboard.
-- Live-timer test-taking window.
+- Live-timer test-taking window (20 minutes for 20 questions).
 - Score evaluations and history details.
 - Ranking leaderboard.
 
@@ -107,4 +147,8 @@ Make sure you have a local MySQL instance running. The schema tables are initial
 - [x] Attempt history
 - [x] Leaderboard
 - [x] Coding questions
+- [x] 50 technical MCQ questions seeded
+- [x] Randomized 20-question assessment selection
+- [x] Shuffled answer options with correct evaluation
+- [x] Refresh-safe attempt consistency
 - [x] Testing

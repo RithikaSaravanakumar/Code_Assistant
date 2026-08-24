@@ -92,10 +92,10 @@
                 
                 <!-- Options -->
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    {% for opt_key, opt_val in [('A', item.option_a), ('B', item.option_b), ('C', item.option_c), ('D', item.option_d)] %}
+                    {% for opt_key, opt_val in [('A', item.opt_a_text), ('B', item.opt_b_text), ('C', item.opt_c_text), ('D', item.opt_d_text)] %}
 
                         {# Determine option styling #}
-                        {% if opt_key == item.correct_answer %}
+                        {% if opt_key == item.correct_label %}
                             {% set opt_border = "var(--success)" %}
                             {% set opt_bg = "var(--success-light)" %}
                             {% set key_color = "#34d399" %}

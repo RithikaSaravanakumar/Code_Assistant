@@ -52,9 +52,41 @@ class AssessmentAttempt(db.Model):
     submitted_at = db.Column(db.DateTime, nullable=True)
 
     answers = db.relationship('Answer', backref='attempt', lazy=True, cascade="all, delete-orphan")
+    attempt_questions = db.relationship(
+        'AttemptQuestion',
+        lazy=True,
+        cascade="all, delete-orphan",
+        order_by="AttemptQuestion.order_index"
+    )
 
     def __repr__(self):
         return f"<AssessmentAttempt {self.id} - User {self.user_id}>"
+
+class AttemptQuestion(db.Model):
+    """
+    Stores the 20 randomly selected questions for a specific assessment attempt,
+    along with the shuffled option order and remapped correct answer label.
+    This ensures:
+      - Consistent questions on page refresh (no re-randomisation)
+      - Correct evaluation even after options are shuffled per attempt
+    """
+    __tablename__ = 'attempt_questions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    attempt_id = db.Column(db.Integer, db.ForeignKey('assessment_attempts.id', ondelete='CASCADE'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('questions.id', ondelete='CASCADE'), nullable=False)
+    order_index = db.Column(db.Integer, nullable=False)       # 1-20 display position
+    opt_a_text = db.Column(db.String(500), nullable=False)    # Shuffled option A text
+    opt_b_text = db.Column(db.String(500), nullable=False)    # Shuffled option B text
+    opt_c_text = db.Column(db.String(500), nullable=False)    # Shuffled option C text
+    opt_d_text = db.Column(db.String(500), nullable=False)    # Shuffled option D text
+    correct_label = db.Column(db.String(1), nullable=False)   # Remapped correct label (A/B/C/D) after shuffle
+
+    # Eager-load the source question for template access (aq.question.question_text, etc.)
+    question = db.relationship('Question', foreign_keys=[question_id], lazy='joined')
+
+    def __repr__(self):
+        return f"<AttemptQuestion attempt={self.attempt_id} q={self.question_id} order={self.order_index}>"
 
 class Answer(db.Model):
     __tablename__ = 'answers'
