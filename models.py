@@ -30,6 +30,9 @@ class User(db.Model):
     coding_submissions = db.relationship('CodingSubmission', backref='user', lazy=True, cascade="all, delete-orphan")
     coding_sessions = db.relationship('CodingTimedSession', backref='user', lazy=True, cascade="all, delete-orphan")
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def __repr__(self):
         return f"<User {self.username} ({self.role})>"
 
@@ -49,6 +52,9 @@ class Question(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     answers = db.relationship('Answer', backref='question', lazy=True, cascade="all, delete-orphan")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def __repr__(self):
         return f"<Question {self.id} ({self.question_type})>"
@@ -93,6 +99,9 @@ class CodingQuestion(db.Model):
             return custom
         return DEFAULT_STARTER_CODE.get(lang, DEFAULT_STARTER_CODE['python'])
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def __repr__(self):
         return f"<CodingQuestion {self.id}: {self.title}>"
 
@@ -106,6 +115,9 @@ class TestCase(db.Model):
     expected_output = db.Column(db.Text, nullable=False)
     is_sample = db.Column(db.Boolean, default=False, nullable=False)
     is_hidden = db.Column(db.Boolean, default=True, nullable=False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def __repr__(self):
         kind = 'sample' if self.is_sample else 'hidden'
@@ -127,6 +139,9 @@ class CodingSubmission(db.Model):
     execution_status = db.Column(db.String(100), nullable=False, default='Not Executed')
     is_run = db.Column(db.Boolean, default=False, nullable=False)
     submitted_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def __repr__(self):
         return f"<CodingSubmission {self.id} - User {self.user_id} - Q {self.question_id}>"
@@ -154,6 +169,9 @@ class CodingTimedSession(db.Model):
         start = self.started_at.replace(tzinfo=timezone.utc)
         return int((start.timestamp() + self.duration_minutes * 60) * 1000)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def __repr__(self):
         return f"<CodingTimedSession {self.id} user={self.user_id}>"
 
@@ -177,6 +195,9 @@ class AssessmentAttempt(db.Model):
         order_by="AttemptQuestion.order_index"
     )
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def __repr__(self):
         return f"<AssessmentAttempt {self.id} - User {self.user_id}>"
 
@@ -196,6 +217,9 @@ class AttemptQuestion(db.Model):
 
     question = db.relationship('Question', foreign_keys=[question_id], lazy='joined')
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def __repr__(self):
         return f"<AttemptQuestion attempt={self.attempt_id} q={self.question_id} order={self.order_index}>"
 
@@ -208,6 +232,9 @@ class Answer(db.Model):
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id', ondelete='CASCADE'), nullable=False)
     selected_answer = db.Column(db.String(255), nullable=True)
     is_correct = db.Column(db.Boolean, default=False, nullable=False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def __repr__(self):
         return f"<Answer {self.id} - Attempt {self.attempt_id} - Question {self.question_id}>"

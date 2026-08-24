@@ -5,6 +5,7 @@ from flask import Flask, jsonify, render_template, request, redirect, url_for, s
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from config import Config
+from execution_service import execute_python_in_sandbox
 from models import (
     db, User, AssessmentAttempt, AttemptQuestion, Question, Answer,
     CodingQuestion, TestCase, CodingSubmission, CodingTimedSession,
@@ -778,11 +779,9 @@ def submit_coding_code(question_id):
         return jsonify({'error': 'Timed assessment has expired. Submission blocked.'}), 403
 
     all_cases = TestCase.query.filter_by(question_id=question_id).order_by(TestCase.id).all()
-    result = run_against_test_cases(code, language, all_cases, question.marks)
+    result = run_against_test_cases(code, language, all_cases, question.marks, hide_hidden_details=True)
 
-    verdict = 'Pending Execution'
-    if result.execution_available:
-        verdict = 'Accepted' if result.passed == result.total else 'Wrong Answer'
+    verdict = result.status if result.execution_available else 'Pending'
 
     submission = CodingSubmission(
         user_id=session['user_id'],
@@ -793,7 +792,7 @@ def submit_coding_code(question_id):
         test_cases_passed=result.passed,
         test_cases_total=result.total,
         score=result.score,
-        execution_status=result.status,
+        execution_status="Executed" if result.execution_available else "Not Executed",
         is_run=False,
     )
     db.session.add(submission)
@@ -823,6 +822,12 @@ def coding_submission_result(submission_id):
         submission=submission,
         question=question,
     )
+
+
+@app.route('/coding_submission_result/<int:submission_id>')
+@student_required
+def coding_submission_result_alias(submission_id):
+    return redirect(url_for('coding_submission_result', submission_id=submission_id))
 
 
 @app.route('/coding_history')

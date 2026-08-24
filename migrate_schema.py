@@ -44,6 +44,22 @@ def migrate():
                     conn.execute(text(f"ALTER TABLE coding_submissions ADD COLUMN {col} {typedef}"))
                     print(f"Added coding_submissions.{col}")
 
+        # Check if coding_submissions.question_id references old questions table
+        insp = inspect(db.engine)
+        fks = insp.get_foreign_keys('coding_submissions')
+        for fk in fks:
+            if 'question_id' in fk.get('constrained_columns', []) and fk.get('referred_table') == 'questions':
+                fk_name = fk.get('name')
+                print(f"Fixing legacy foreign key {fk_name} pointing to 'questions'...")
+                with db.engine.begin() as conn:
+                    if fk_name:
+                        conn.execute(text(f"ALTER TABLE coding_submissions DROP FOREIGN KEY {fk_name}"))
+                    conn.execute(text(
+                        "ALTER TABLE coding_submissions ADD CONSTRAINT fk_coding_sub_question "
+                        "FOREIGN KEY (question_id) REFERENCES coding_questions(id) ON DELETE CASCADE"
+                    ))
+                print("Updated foreign key on coding_submissions -> coding_questions(id).")
+
         print("Schema migration complete.")
 
 
