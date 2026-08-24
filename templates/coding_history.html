@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Submission History - CodeEval{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding.css') }}">
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 32px;">
+    <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 4px;">Coding Submission History</h1>
+    <p style="color: var(--text-secondary);">Your past coding submissions across all problems.</p>
+</div>
+
+{% if submissions %}
+<div class="history-table-wrap">
+    <table class="submissions-table">
+        <thead>
+            <tr>
+                <th>Problem</th>
+                <th>Language</th>
+                <th>Submitted</th>
+                <th>Status</th>
+                <th>Test Cases</th>
+                <th>Score</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in submissions %}
+            <tr>
+                <td>
+                    <a href="{{ url_for('coding_question', question_id=sub.question_id) }}" class="problem-link">
+                        {{ sub.question.title }}
+                    </a>
+                </td>
+                <td>{{ sub.programming_language|capitalize }}</td>
+                <td>{{ sub.submitted_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                <td><span class="status-badge status-{{ sub.status|lower|replace(' ', '-') }}">{{ sub.status }}</span></td>
+                <td>{{ sub.test_cases_passed }}/{{ sub.test_cases_total }}</td>
+                <td>{{ sub.score|int }}/{{ sub.question.marks }}</td>
+                <td>
+                    <a href="{{ url_for('view_submission_code', submission_id=sub.id) }}" class="btn btn-secondary btn-sm">View Code</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📝</div>
+    <h3>No Submissions Yet</h3>
+    <p>Start solving coding problems to build your submission history.</p>
+    <a href="{{ url_for('coding_questions') }}" class="btn btn-primary" style="margin-top: 16px;">Browse Problems</a>
+</div>
+{% endif %}
+{% endblock %}

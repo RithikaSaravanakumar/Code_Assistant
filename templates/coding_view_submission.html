@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}View Submission - CodeEval{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding.css') }}">
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+    <a href="{{ url_for('coding_history') }}" class="coding-back-link">&larr; Back to History</a>
+</div>
+
+<div class="submission-view-card">
+    <h1>{{ question.title }}</h1>
+    <div class="submission-meta">
+        <span>{{ submission.programming_language|capitalize }}</span>
+        <span>{{ submission.submitted_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+        <span class="status-badge status-{{ submission.status|lower|replace(' ', '-') }}">{{ submission.status }}</span>
+    </div>
+    <pre class="code-view">{{ submission.submitted_code }}</pre>
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('coding_question', question_id=question.id) }}" class="btn btn-primary">Open Problem</a>
+    </div>
+</div>
+{% endblock %}

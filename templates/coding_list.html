@@ -2,38 +2,53 @@
 
 {% block title %}Coding Problems - CodeEval{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding.css') }}">
+{% endblock %}
+
 {% block content %}
-<div style="margin-bottom: 32px;">
-    <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 4px;">Coding Challenges</h1>
-    <p style="color: var(--text-secondary);">Write solutions for the algorithm problems below to practice your coding skills.</p>
+<div class="coding-list-header">
+    <div>
+        <h1>Coding Challenges</h1>
+        <p class="subtitle">Solve algorithm problems in a HackerRank-style coding environment.</p>
+    </div>
+    {% if timed_session %}
+    <div class="timed-session-banner">
+        <span>Timed assessment active</span>
+        <form action="{{ url_for('end_coding_assessment') }}" method="POST" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="btn btn-danger btn-sm">End Session</button>
+        </form>
+    </div>
+    {% else %}
+    <form action="{{ url_for('start_coding_assessment') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn btn-primary">Start Timed Assessment (60 min)</button>
+    </form>
+    {% endif %}
 </div>
 
-<div class="features-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+<div class="coding-problems-grid">
     {% if questions %}
         {% for q in questions %}
-            <div class="feature-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <span style="font-size: 12px; font-weight: 700; background-color: var(--success-light); color: #34d399; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">
-                            Coding Challenge
-                        </span>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-secondary);">
-                            {{ q.marks }} Marks
-                        </span>
-                    </div>
-                    <h3 style="margin-bottom: 12px; line-height: 1.4;">Problem #{{ q.id }}</h3>
-                    <p style="margin-bottom: 24px; color: var(--text-secondary); max-height: 80px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-                        {{ q.question_text }}
-                    </p>
-                </div>
-                <a href="/coding_questions/{{ q.id }}" class="btn btn-primary" style="width: 100%;">Solve Problem</a>
+        <a href="{{ url_for('coding_question', question_id=q.id) }}" class="coding-problem-card">
+            <div class="card-top">
+                <span class="difficulty-badge difficulty-{{ q.difficulty|lower }}">{{ q.difficulty }}</span>
+                <span class="marks-badge">{{ q.marks }} pts</span>
             </div>
+            <h3>{{ q.title }}</h3>
+            <p>{{ q.description[:120] }}{% if q.description|length > 120 %}...{% endif %}</p>
+            <div class="card-footer">
+                <span>Time: {{ q.expected_time_complexity }}</span>
+                <span class="solve-link">Solve &rarr;</span>
+            </div>
+        </a>
         {% endfor %}
     {% else %}
-        <div style="grid-column: 1 / -1; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 60px 24px; text-align: center; color: var(--text-secondary);">
-            <div style="font-size: 48px; margin-bottom: 16px;">💻</div>
-            <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">No Challenges Active</h3>
-            <p style="font-size: 14px;">Check back later! Admin has not loaded any coding challenges yet.</p>
+        <div class="empty-state">
+            <div class="empty-icon">💻</div>
+            <h3>No Challenges Available</h3>
+            <p>Run <code>python seed_coding_questions.py</code> to populate coding problems.</p>
         </div>
     {% endif %}
 </div>

@@ -2,26 +2,165 @@
 
 {% block title %}{{ 'Edit' if question else 'Add' }} Coding Question - CodeEval{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="form-card" style="max-width: 600px;">
-    <h2 class="form-title">{{ 'Edit' if question else 'Add New' }} Coding Question</h2>
-    <p class="form-subtitle" style="margin-bottom: 24px;">Configure programming problem details below</p>
-    
-    <form action="{{ url_for('edit_question', question_id=question.id) if question else url_for('add_coding') }}" method="POST">
-        <div class="form-group">
-            <label for="question_text" class="form-label">Problem Description</label>
-            <textarea id="question_text" name="question_text" class="form-control" rows="8" placeholder="Describe the problem, input/output formats, constraints, and test cases..." required>{{ question.question_text if question else '' }}</textarea>
+<div class="form-card-wide">
+    <h2>{{ 'Edit' if question else 'Add New' }} Coding Question</h2>
+    <p class="form-subtitle">Configure problem details, starter code, and test cases.</p>
+
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="form-row">
+            <div class="form-group flex-2">
+                <label class="form-label">Title</label>
+                <input type="text" name="title" class="form-control" value="{{ question.title if question else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Difficulty</label>
+                <select name="difficulty" class="form-control">
+                    {% for d in ['Easy', 'Medium', 'Hard'] %}
+                    <option value="{{ d }}" {% if question and question.difficulty == d %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Marks</label>
+                <input type="number" name="marks" class="form-control" min="1" value="{{ question.marks if question else 100 }}">
+            </div>
         </div>
-        
+
         <div class="form-group">
-            <label for="marks" class="form-label">Marks / Score Points</label>
-            <input type="number" id="marks" name="marks" class="form-control" min="1" max="100" value="{{ question.marks if question else '1' }}" required>
+            <label class="form-label">Problem Statement</label>
+            <textarea name="description" class="form-control" rows="6" required>{{ question.description if question else '' }}</textarea>
         </div>
-        
-        <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <button type="submit" class="btn btn-primary" style="flex: 1;">Save Question</button>
-            <a href="/admin/dashboard" class="btn btn-secondary" style="flex: 1;">Cancel</a>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Input Format</label>
+                <textarea name="input_format" class="form-control" rows="3">{{ question.input_format if question else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Output Format</label>
+                <textarea name="output_format" class="form-control" rows="3">{{ question.output_format if question else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Constraints</label>
+            <textarea name="constraints" class="form-control" rows="2">{{ question.constraints if question else '' }}</textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Sample Input</label>
+                <textarea name="sample_input" class="form-control" rows="3">{{ question.sample_input if question else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sample Output</label>
+                <textarea name="sample_output" class="form-control" rows="3">{{ question.sample_output if question else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Expected Time Complexity</label>
+                <input type="text" name="expected_time_complexity" class="form-control" value="{{ question.expected_time_complexity if question else 'O(n)' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Expected Space Complexity</label>
+                <input type="text" name="expected_space_complexity" class="form-control" value="{{ question.expected_space_complexity if question else 'O(n)' }}">
+            </div>
+        </div>
+
+        <h3 class="section-title">Starter Code (per language)</h3>
+        <div class="form-group">
+            <label class="form-label">Python</label>
+            <textarea name="starter_code_python" class="form-control code-textarea" rows="5">{{ question.starter_code_python if question else 'def solution():\n    pass' }}</textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Java</label>
+            <textarea name="starter_code_java" class="form-control code-textarea" rows="6">{{ question.starter_code_java if question else 'public class Main {\n    public static void main(String[] args) {\n\n    }\n}' }}</textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">JavaScript</label>
+            <textarea name="starter_code_javascript" class="form-control code-textarea" rows="4">{{ question.starter_code_javascript if question else 'function solution() {\n\n}' }}</textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">C++</label>
+            <textarea name="starter_code_cpp" class="form-control code-textarea" rows="6">{{ question.starter_code_cpp if question else '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n\n}' }}</textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">C</label>
+            <textarea name="starter_code_c" class="form-control code-textarea" rows="5">{{ question.starter_code_c if question else '#include <stdio.h>\n\nint main() {\n\n}' }}</textarea>
+        </div>
+
+        <div style="display:flex; gap:12px; margin-top:24px;">
+            <button type="submit" class="btn btn-primary">Save Question</button>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
+
+    {% if question %}
+    <hr class="section-divider">
+    <h3 class="section-title">Test Cases</h3>
+
+    {% if test_cases %}
+    <div class="table-wrap" style="margin-bottom: 24px;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Input</th>
+                    <th>Expected Output</th>
+                    <th>Sample</th>
+                    <th>Hidden</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tc in test_cases %}
+                <tr>
+                    <td>#{{ tc.id }}</td>
+                    <td><pre class="tc-preview">{{ tc.input_data[:60] }}{% if tc.input_data|length > 60 %}...{% endif %}</pre></td>
+                    <td><pre class="tc-preview">{{ tc.expected_output[:60] }}{% if tc.expected_output|length > 60 %}...{% endif %}</pre></td>
+                    <td>{{ 'Yes' if tc.is_sample else 'No' }}</td>
+                    <td>{{ 'Yes' if tc.is_hidden else 'No' }}</td>
+                    <td>
+                        <form action="{{ url_for('admin_delete_testcase', testcase_id=tc.id) }}" method="POST" onsubmit="return confirm('Delete test case?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('admin_add_testcase', question_id=question.id) }}" class="testcase-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <h4>Add Test Case</h4>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Input Data</label>
+                <textarea name="input_data" class="form-control" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Expected Output</label>
+                <textarea name="expected_output" class="form-control" rows="4" required></textarea>
+            </div>
+        </div>
+        <div class="checkbox-row">
+            <label><input type="checkbox" name="is_sample"> Visible to students (sample)</label>
+            <label><input type="checkbox" name="is_hidden" checked> Hidden (used for grading)</label>
+        </div>
+        <button type="submit" class="btn btn-secondary">Add Test Case</button>
+    </form>
+    {% endif %}
 </div>
 {% endblock %}

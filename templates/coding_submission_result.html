@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Submission Result - CodeEval{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding.css') }}">
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+    <a href="{{ url_for('coding_question', question_id=question.id) }}" class="coding-back-link">&larr; Back to Problem</a>
+</div>
+
+<div class="submission-result-card">
+    <h1>Submission Result</h1>
+
+    <div class="verdict-banner verdict-{{ submission.status|lower|replace(' ', '-') }}">
+        {% if submission.status == 'Accepted' %}
+            ✓ Accepted
+        {% elif submission.status == 'Wrong Answer' %}
+            ✗ Wrong Answer
+        {% else %}
+            ⏳ {{ submission.status }}
+        {% endif %}
+    </div>
+
+    <div class="result-stats">
+        <div class="result-stat">
+            <span class="stat-label">Test Cases</span>
+            <span class="stat-value">{{ submission.test_cases_passed }} / {{ submission.test_cases_total }} Passed</span>
+        </div>
+        <div class="result-stat">
+            <span class="stat-label">Score</span>
+            <span class="stat-value">{{ submission.score|int }} / {{ question.marks }}</span>
+        </div>
+        <div class="result-stat">
+            <span class="stat-label">Language</span>
+            <span class="stat-value">{{ submission.programming_language|capitalize }}</span>
+        </div>
+        <div class="result-stat">
+            <span class="stat-label">Execution Status</span>
+            <span class="stat-value">{{ submission.execution_status }}</span>
+        </div>
+    </div>
+
+    <div class="complexity-section">
+        <h3>Expected Complexity</h3>
+        <p class="complexity-note">The values below are the expected time and space complexity for this problem — not automatically measured from your submission.</p>
+        <div class="complexity-grid">
+            <div class="complexity-item">
+                <span class="complexity-label">Time</span>
+                <span class="complexity-value">{{ question.expected_time_complexity }}</span>
+            </div>
+            <div class="complexity-item">
+                <span class="complexity-label">Space</span>
+                <span class="complexity-value">{{ question.expected_space_complexity }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if submission.execution_status == 'Execution Unavailable' %}
+    <div class="info-banner">
+        Secure code execution is not yet configured. Your submission has been saved. Connect a sandboxed execution service to enable automatic grading.
+    </div>
+    {% endif %}
+
+    <div class="result-actions">
+        <a href="{{ url_for('coding_question', question_id=question.id) }}" class="btn btn-primary">Try Again</a>
+        <a href="{{ url_for('view_submission_code', submission_id=submission.id) }}" class="btn btn-secondary">View Code</a>
+        <a href="{{ url_for('coding_history') }}" class="btn btn-secondary">Submission History</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,110 +1,175 @@
 {% extends "base.html" %}
 
-{% block title %}Solve Coding Challenge - CodeEval{% endblock %}
+{% block container_class %}container-fluid{% endblock %}
+{% block title %}{{ question.title }} - CodeEval{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coding.css') }}">
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 24px;">
-    <a href="/coding_questions" style="color: var(--primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
-        &larr; Back to Challenges
-    </a>
-</div>
-
-<!-- Split Workspace Layout -->
-<div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; align-items: start; margin-bottom: 48px; flex-wrap: wrap;">
-    
-    <!-- Left Column: Description -->
-    <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 32px; box-shadow: var(--shadow-md);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="font-size: 20px; font-weight: 700;">Problem #{{ question.id }}</h2>
-            <span style="font-size: 13px; font-weight: 700; background-color: var(--primary-light); color: #a5b4fc; padding: 4px 10px; border-radius: 4px;">
-                {{ question.marks }} Marks
-            </span>
-        </div>
-        
-        <div style="font-size: 15px; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap;">
-            {{ question.question_text }}
-        </div>
+<div class="coding-topbar">
+    <div class="coding-topbar-left">
+        <a href="{{ url_for('coding_questions') }}" class="coding-back-link">&larr; Problems</a>
+        <span class="coding-assessment-name">{{ question.title }}</span>
     </div>
-    
-    <!-- Right Column: Code Editor Form -->
-    <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 32px; box-shadow: var(--shadow-md);">
-        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 24px;">Code Editor</h2>
-        
-        <form action="/coding_questions/{{ question.id }}/submit" method="POST">
-            <!-- Language Selection -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label for="language" class="form-label">Programming Language</label>
-                <select id="language" name="language" class="form-control" style="max-width: 200px;" required>
-                    <option value="Python" selected>Python</option>
-                    <option value="JavaScript">JavaScript</option>
-                    <option value="Java">Java</option>
-                    <option value="C++">C++</option>
-                </select>
-            </div>
-            
-            <!-- Code Textarea -->
-            <div class="form-group" style="margin-bottom: 24px;">
-                <label for="code-editor" class="form-label">Write your code here</label>
-                <textarea id="code-editor" name="code" class="form-control" rows="15" 
-                    style="font-family: 'Consolas', 'Courier New', monospace; font-size: 14px; background-color: var(--bg-secondary); border-color: var(--border-color); color: #34d399; line-height: 1.5; resize: vertical;" 
-                    placeholder="# Write your solution here...&#10;def solution():&#10;    pass" required></textarea>
-            </div>
-            
-            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">Submit Code Solution</button>
-        </form>
+    <div class="coding-topbar-right">
+        {% if timed_session %}
+        <div class="coding-timer" id="coding-timer"
+             data-expires-ms="{{ timed_session.expires_at_ms }}"
+             data-server-now-ms="{{ server_now_ms }}">
+            <span class="timer-label">Time Left</span>
+            <span class="timer-value" id="timer-display">--:--</span>
+        </div>
+        {% endif %}
+        <span class="coding-profile">{{ session.get('username') }}</span>
     </div>
 </div>
 
-<!-- Bottom Row: Submissions History / Retrieval -->
-<div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 32px; box-shadow: var(--shadow-md); margin-bottom: 60px;">
-    <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Your Submissions</h2>
-    
-    {% if submissions %}
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                <thead>
-                    <tr style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
-                        <th style="padding: 14px 20px; font-weight: 600;">Submission ID</th>
-                        <th style="padding: 14px 20px; font-weight: 600;">Time Submitted</th>
-                        <th style="padding: 14px 20px; font-weight: 600; text-align: right;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for sub in submissions %}
-                        <tr style="border-bottom: 1px solid var(--border-color);">
-                            <td style="padding: 14px 20px; color: var(--text-secondary); font-weight: 600;">
-                                #{{ sub.id }}
-                            </td>
-                            <td style="padding: 14px 20px; color: var(--text-primary);">
-                                {{ sub.submitted_at.strftime('%b %d, %Y at %I:%M %p') }} UTC
-                            </td>
-                            <td style="padding: 14px 20px; text-align: right;">
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="loadCodeToEditor(this)" data-code="{{ sub.code|e }}">
-                                    Load in Editor
-                                </button>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="coding-workspace" id="coding-workspace"
+     data-question-id="{{ question.id }}"
+     data-csrf="{{ csrf_token }}"
+     data-timer-active="{{ 'true' if timed_session else 'false' }}"
+     data-expires-ms="{{ timed_session.expires_at_ms if timed_session else '' }}"
+     data-server-now-ms="{{ server_now_ms }}">
+
+    <!-- Left Panel: Problem -->
+    <div class="coding-panel coding-problem-panel">
+        <div class="problem-header">
+            <h1 class="problem-title">{{ question.title }}</h1>
+            <div class="problem-meta">
+                <span class="difficulty-badge difficulty-{{ question.difficulty|lower }}">{{ question.difficulty }}</span>
+                <span class="marks-badge">{{ question.marks }} pts</span>
+            </div>
         </div>
-    {% else %}
-        <p style="color: var(--text-secondary); font-size: 14px; text-align: center; padding: 20px 0;">
-            No submissions recorded yet for this coding question.
-        </p>
-    {% endif %}
+
+        <section class="problem-section">
+            <h3>Problem Statement</h3>
+            <div class="problem-text">{{ question.description }}</div>
+        </section>
+
+        <section class="problem-section">
+            <h3>Input Format</h3>
+            <div class="problem-text">{{ question.input_format }}</div>
+        </section>
+
+        <section class="problem-section">
+            <h3>Output Format</h3>
+            <div class="problem-text">{{ question.output_format }}</div>
+        </section>
+
+        <section class="problem-section">
+            <h3>Constraints</h3>
+            <div class="problem-text">{{ question.constraints }}</div>
+        </section>
+
+        <section class="problem-section">
+            <h3>Example</h3>
+            <div class="io-block">
+                <div class="io-label">Input</div>
+                <pre class="io-content">{{ question.sample_input }}</pre>
+            </div>
+            <div class="io-block">
+                <div class="io-label">Output</div>
+                <pre class="io-content">{{ question.sample_output }}</pre>
+            </div>
+        </section>
+
+        <section class="problem-section">
+            <h3>Expected Complexity</h3>
+            <div class="complexity-grid">
+                <div class="complexity-item">
+                    <span class="complexity-label">Time</span>
+                    <span class="complexity-value">{{ question.expected_time_complexity }}</span>
+                </div>
+                <div class="complexity-item">
+                    <span class="complexity-label">Space</span>
+                    <span class="complexity-value">{{ question.expected_space_complexity }}</span>
+                </div>
+            </div>
+        </section>
+
+        {% if sample_cases %}
+        <section class="problem-section">
+            <h3>Sample Test Cases</h3>
+            {% for tc in sample_cases %}
+            <div class="sample-tc">
+                <div class="sample-tc-title">Test Case {{ loop.index }}</div>
+                <div class="io-block">
+                    <div class="io-label">Input</div>
+                    <pre class="io-content">{{ tc.input_data }}</pre>
+                </div>
+                <div class="io-block">
+                    <div class="io-label">Expected Output</div>
+                    <pre class="io-content">{{ tc.expected_output }}</pre>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+    </div>
+
+    <!-- Right Panel: Editor -->
+    <div class="coding-panel coding-editor-panel">
+        <div class="editor-toolbar">
+            <select id="language-select" class="language-select" aria-label="Programming language">
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="javascript">JavaScript</option>
+                <option value="cpp">C++</option>
+                <option value="c">C</option>
+            </select>
+            <div class="editor-actions">
+                <button type="button" id="run-btn" class="btn btn-secondary btn-sm">Run Code</button>
+                <button type="button" id="submit-btn" class="btn btn-primary btn-sm">Submit Code</button>
+            </div>
+        </div>
+
+        <div id="monaco-editor" class="monaco-container"></div>
+
+        <div class="results-panel" id="results-panel">
+            <div class="results-header">
+                <span id="execution-status">Ready</span>
+            </div>
+            <div id="results-message" class="results-message"></div>
+            <div id="test-results" class="test-results"></div>
+        </div>
+    </div>
 </div>
+
+{% if submissions %}
+<div class="recent-submissions">
+    <h3>Your Recent Submissions</h3>
+    <table class="submissions-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Language</th>
+                <th>Status</th>
+                <th>Score</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in submissions %}
+            <tr>
+                <td>{{ sub.submitted_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                <td>{{ sub.programming_language|capitalize }}</td>
+                <td><span class="status-badge status-{{ sub.status|lower|replace(' ', '-') }}">{{ sub.status }}</span></td>
+                <td>{{ sub.test_cases_passed }}/{{ sub.test_cases_total }}</td>
+                <td><a href="{{ url_for('view_submission_code', submission_id=sub.id) }}" class="btn btn-secondary btn-sm">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<script id="starter-codes" type="application/json">{{ starter_codes | tojson }}</script>
 {% endblock %}
 
 {% block scripts %}
-<script>
-    function loadCodeToEditor(button) {
-        const code = button.getAttribute('data-code');
-        document.getElementById('code-editor').value = code;
-        window.scrollTo({
-            top: document.getElementById('code-editor').offsetTop - 120,
-            behavior: 'smooth'
-        });
-    }
-</script>
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+<script src="{{ url_for('static', filename='js/coding_workspace.js') }}"></script>
 {% endblock %}
