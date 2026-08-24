@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Register - CodeEval{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <h2 class="form-title">Create Account</h2>
+    <p class="form-subtitle">Register to start taking coding and MCQ assessments</p>
+    
+    <form action="/register" method="POST" autocomplete="off">
+        <div class="form-group">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" id="username" name="username" class="form-control" placeholder="e.g., johndoe" required minlength="3" maxlength="20">
+        </div>
+        
+        <div class="form-group">
+            <label for="email" class="form-label">Email Address</label>
+            <input type="email" id="email" name="email" class="form-control" placeholder="e.g., john@example.com" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" id="password" name="password" class="form-control" placeholder="Minimum 6 characters" required minlength="6">
+        </div>
+        
+        <div class="form-group">
+            <label for="confirm_password" class="form-label">Confirm Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Re-enter password" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 10px;">Register</button>
+    </form>
+    
+    <div class="form-footer">
+        Already have an account? <a href="/login">Sign In</a>
+    </div>
+</div>
+{% endblock %}
