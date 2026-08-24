@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - CodeEval Coding Assessment Platform{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Evaluate Your Coding Skills Instantly</h1>
+    <p class="hero-subtitle">Participate in assessments, solve coding challenges, test your MCQ knowledge, and benchmark your progress on our live leaderboard.</p>
+    
+    <div class="hero-actions">
+        {% if session.get('user_id') %}
+            {% if session.get('role') == 'admin' %}
+                <a href="/admin/dashboard" class="btn btn-primary btn-lg">Go to Admin Dashboard</a>
+            {% else %}
+                <a href="/dashboard" class="btn btn-primary btn-lg">Go to Student Dashboard</a>
+            {% endif %}
+        {% else %}
+            <a href="/register" class="btn btn-primary btn-lg">Create Student Account</a>
+            <a href="/login" class="btn btn-secondary btn-lg">Sign In</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="features-grid">
+    <div class="feature-card">
+        <div class="feature-icon">📝</div>
+        <h3>MCQ Assessments</h3>
+        <p>Multiple-choice questions with automatic evaluation, timed attempts, and detailed metrics on performance.</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">💻</div>
+        <h3>Coding Module</h3>
+        <p>Write, structure, and save your solutions for complex algorithm and coding problems directly in the browser.</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">⏱️</div>
+        <h3>Timed Attempts</h3>
+        <p>Simulate real interview conditions with a robust JavaScript-powered test timer that auto-submits when time expires.</p>
+    </div>
+    
+    <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <h3>Live Leaderboard</h3>
+        <p>Compare scores with peers instantly and track rankings sorted by evaluation performance.</p>
+    </div>
+</div>
+{% endblock %}
