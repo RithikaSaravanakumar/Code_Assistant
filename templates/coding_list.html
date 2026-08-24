@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Coding Problems - CodeEval{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 32px;">
+    <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 4px;">Coding Challenges</h1>
+    <p style="color: var(--text-secondary);">Write solutions for the algorithm problems below to practice your coding skills.</p>
+</div>
+
+<div class="features-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+    {% if questions %}
+        {% for q in questions %}
+            <div class="feature-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <span style="font-size: 12px; font-weight: 700; background-color: var(--success-light); color: #34d399; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">
+                            Coding Challenge
+                        </span>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-secondary);">
+                            {{ q.marks }} Marks
+                        </span>
+                    </div>
+                    <h3 style="margin-bottom: 12px; line-height: 1.4;">Problem #{{ q.id }}</h3>
+                    <p style="margin-bottom: 24px; color: var(--text-secondary); max-height: 80px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+                        {{ q.question_text }}
+                    </p>
+                </div>
+                <a href="/coding_questions/{{ q.id }}" class="btn btn-primary" style="width: 100%;">Solve Problem</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div style="grid-column: 1 / -1; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 60px 24px; text-align: center; color: var(--text-secondary);">
+            <div style="font-size: 48px; margin-bottom: 16px;">💻</div>
+            <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">No Challenges Active</h3>
+            <p style="font-size: 14px;">Check back later! Admin has not loaded any coding challenges yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

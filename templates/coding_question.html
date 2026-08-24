@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Solve Coding Challenge - CodeEval{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+    <a href="/coding_questions" style="color: var(--primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+        &larr; Back to Challenges
+    </a>
+</div>
+
+<!-- Split Workspace Layout -->
+<div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; align-items: start; margin-bottom: 48px; flex-wrap: wrap;">
+    
+    <!-- Left Column: Description -->
+    <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 32px; box-shadow: var(--shadow-md);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="font-size: 20px; font-weight: 700;">Problem #{{ question.id }}</h2>
+            <span style="font-size: 13px; font-weight: 700; background-color: var(--primary-light); color: #a5b4fc; padding: 4px 10px; border-radius: 4px;">
+                {{ question.marks }} Marks
+            </span>
+        </div>
+        
+        <div style="font-size: 15px; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap;">
+            {{ question.question_text }}
+        </div>
+    </div>
+    
+    <!-- Right Column: Code Editor Form -->
+    <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 32px; box-shadow: var(--shadow-md);">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 24px;">Code Editor</h2>
+        
+        <form action="/coding_questions/{{ question.id }}/submit" method="POST">
+            <!-- Language Selection -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="language" class="form-label">Programming Language</label>
+                <select id="language" name="language" class="form-control" style="max-width: 200px;" required>
+                    <option value="Python" selected>Python</option>
+                    <option value="JavaScript">JavaScript</option>
+                    <option value="Java">Java</option>
+                    <option value="C++">C++</option>
+                </select>
+            </div>
+            
+            <!-- Code Textarea -->
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="code-editor" class="form-label">Write your code here</label>
+                <textarea id="code-editor" name="code" class="form-control" rows="15" 
+                    style="font-family: 'Consolas', 'Courier New', monospace; font-size: 14px; background-color: var(--bg-secondary); border-color: var(--border-color); color: #34d399; line-height: 1.5; resize: vertical;" 
+                    placeholder="# Write your solution here...&#10;def solution():&#10;    pass" required></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">Submit Code Solution</button>
+        </form>
+    </div>
+</div>
+
+<!-- Bottom Row: Submissions History / Retrieval -->
+<div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 32px; box-shadow: var(--shadow-md); margin-bottom: 60px;">
+    <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Your Submissions</h2>
+    
+    {% if submissions %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                <thead>
+                    <tr style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
+                        <th style="padding: 14px 20px; font-weight: 600;">Submission ID</th>
+                        <th style="padding: 14px 20px; font-weight: 600;">Time Submitted</th>
+                        <th style="padding: 14px 20px; font-weight: 600; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in submissions %}
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 14px 20px; color: var(--text-secondary); font-weight: 600;">
+                                #{{ sub.id }}
+                            </td>
+                            <td style="padding: 14px 20px; color: var(--text-primary);">
+                                {{ sub.submitted_at.strftime('%b %d, %Y at %I:%M %p') }} UTC
+                            </td>
+                            <td style="padding: 14px 20px; text-align: right;">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="loadCodeToEditor(this)" data-code="{{ sub.code|e }}">
+                                    Load in Editor
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p style="color: var(--text-secondary); font-size: 14px; text-align: center; padding: 20px 0;">
+            No submissions recorded yet for this coding question.
+        </p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function loadCodeToEditor(button) {
+        const code = button.getAttribute('data-code');
+        document.getElementById('code-editor').value = code;
+        window.scrollTo({
+            top: document.getElementById('code-editor').offsetTop - 120,
+            behavior: 'smooth'
+        });
+    }
+</script>
+{% endblock %}

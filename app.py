@@ -2,7 +2,7 @@ from flask import Flask, jsonify, render_template, request, redirect, url_for, s
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from config import Config
-from models import db, User, AssessmentAttempt, Question, Answer
+from models import db, User, AssessmentAttempt, Question, Answer, CodingSubmission
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -415,7 +415,47 @@ def result(attempt_id):
 @app.route('/coding_questions')
 @student_required
 def coding_questions():
-    return jsonify({"message": "Coding question module is under development (Work Item 10)."}), 200
+    questions = Question.query.filter_by(question_type='coding').all()
+    return render_template('coding_list.html', questions=questions)
+
+@app.route('/coding_questions/<int:question_id>')
+@student_required
+def coding_question(question_id):
+    question = Question.query.get_or_404(question_id)
+    if question.question_type != 'coding':
+        flash('Invalid coding challenge.', 'danger')
+        return redirect(url_for('coding_questions'))
+        
+    user_id = session['user_id']
+    submissions = CodingSubmission.query.filter_by(user_id=user_id, question_id=question_id)\
+                                        .order_by(CodingSubmission.submitted_at.desc()).all()
+                                        
+    return render_template('coding_question.html', question=question, submissions=submissions)
+
+@app.route('/coding_questions/<int:question_id>/submit', methods=['POST'])
+@student_required
+def submit_coding(question_id):
+    question = Question.query.get_or_404(question_id)
+    if question.question_type != 'coding':
+        flash('Invalid coding challenge.', 'danger')
+        return redirect(url_for('coding_questions'))
+        
+    code = request.form.get('code', '').strip()
+    if not code:
+        flash('Code solution cannot be empty.', 'danger')
+        return redirect(url_for('coding_question', question_id=question.id))
+        
+    user_id = session['user_id']
+    new_sub = CodingSubmission(
+        user_id=user_id,
+        question_id=question_id,
+        code=code
+    )
+    db.session.add(new_sub)
+    db.session.commit()
+    
+    flash('Coding solution submitted successfully!', 'success')
+    return redirect(url_for('coding_question', question_id=question.id))
 
 @app.route('/history')
 @student_required
