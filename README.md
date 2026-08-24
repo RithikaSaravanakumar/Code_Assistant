@@ -107,4 +107,4 @@ Make sure you have a local MySQL instance running. The schema tables are initial
 - [x] Attempt history
 - [x] Leaderboard
 - [x] Coding questions
-- [ ] Testing
+- [x] Testing
