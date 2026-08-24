@@ -102,7 +102,7 @@ Make sure you have a local MySQL instance running. The schema tables are initial
 - [x] Admin question management
 - [x] MCQ assessment
 - [x] Timer
-- [ ] Automatic evaluation
+- [x] Automatic evaluation
 - [ ] Result page
 - [ ] Attempt history
 - [ ] Leaderboard

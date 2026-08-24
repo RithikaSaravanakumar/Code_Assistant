@@ -342,20 +342,34 @@ def submit_assessment():
         return redirect(url_for('dashboard'))
         
     questions = Question.query.filter_by(question_type='mcq').all()
+    score = 0.0
+    total_marks = 0
+    
     for q in questions:
         selected_val = request.form.get(f'q_{q.id}')
+        if selected_val:
+            selected_val = selected_val.strip()
+            
+        is_correct = (selected_val == q.correct_answer)
+        total_marks += q.marks
+        if is_correct:
+            score += q.marks
+            
         ans = Answer(
             attempt_id=attempt.id,
             question_id=q.id,
             selected_answer=selected_val,
-            is_correct=False
+            is_correct=is_correct
         )
         db.session.add(ans)
         
+    attempt.score = score
+    attempt.total_marks = total_marks
+    attempt.percentage = (score / total_marks * 100) if total_marks > 0 else 0.0
     attempt.submitted_at = datetime.now(timezone.utc)
     db.session.commit()
     
-    flash('Assessment submitted successfully!', 'success')
+    flash(f'Assessment submitted! You scored {score}/{total_marks} ({attempt.percentage:.1f}%).', 'success')
     return redirect(url_for('dashboard'))
 
 @app.route('/coding_questions')
