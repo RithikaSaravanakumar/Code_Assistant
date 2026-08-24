@@ -2,7 +2,7 @@ from flask import Flask, jsonify, render_template, request, redirect, url_for, s
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from config import Config
-from models import db, User, AssessmentAttempt, Question
+from models import db, User, AssessmentAttempt, Question, Answer
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -298,10 +298,58 @@ def delete_question(question_id):
     flash('Question deleted successfully!', 'success')
     return redirect(url_for('admin_dashboard'))
 
+from datetime import timezone
+
 @app.route('/take_assessment')
 @student_required
 def take_assessment():
-    return jsonify({"message": "MCQ assessment taking interface is under development (Work Item 4)."}), 200
+    questions = Question.query.filter_by(question_type='mcq').all()
+    if not questions:
+        flash('No multiple choice assessments are available at this time.', 'warning')
+        return redirect(url_for('dashboard'))
+        
+    user_id = session['user_id']
+    attempt = AssessmentAttempt(
+        user_id=user_id,
+        score=0.0,
+        total_marks=sum(q.marks for q in questions),
+        percentage=0.0,
+        started_at=datetime.now(timezone.utc)
+    )
+    db.session.add(attempt)
+    db.session.commit()
+    
+    return render_template('take_assessment.html', questions=questions, attempt=attempt)
+
+@app.route('/submit_assessment', methods=['POST'])
+@student_required
+def submit_assessment():
+    attempt_id = request.form.get('attempt_id')
+    if not attempt_id:
+        flash('Invalid attempt ID.', 'danger')
+        return redirect(url_for('dashboard'))
+        
+    attempt = AssessmentAttempt.query.get(attempt_id)
+    if not attempt or attempt.submitted_at is not None:
+        flash('This assessment attempt has already been submitted or is invalid.', 'warning')
+        return redirect(url_for('dashboard'))
+        
+    questions = Question.query.filter_by(question_type='mcq').all()
+    for q in questions:
+        selected_val = request.form.get(f'q_{q.id}')
+        ans = Answer(
+            attempt_id=attempt.id,
+            question_id=q.id,
+            selected_answer=selected_val,
+            is_correct=False
+        )
+        db.session.add(ans)
+        
+    attempt.submitted_at = datetime.now(timezone.utc)
+    db.session.commit()
+    
+    flash('Assessment submitted successfully!', 'success')
+    return redirect(url_for('dashboard'))
 
 @app.route('/coding_questions')
 @student_required
