@@ -370,7 +370,47 @@ def submit_assessment():
     db.session.commit()
     
     flash(f'Assessment submitted! You scored {score}/{total_marks} ({attempt.percentage:.1f}%).', 'success')
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('result', attempt_id=attempt.id))
+
+@app.route('/result/<int:attempt_id>')
+@login_required
+def result(attempt_id):
+    attempt = AssessmentAttempt.query.get_or_404(attempt_id)
+    
+    # Security check: only own attempt or admin
+    if session.get('role') != 'admin' and attempt.user_id != session.get('user_id'):
+        flash('Access denied. You cannot view this assessment result.', 'danger')
+        return redirect(url_for('dashboard'))
+        
+    answers = Answer.query.filter_by(attempt_id=attempt_id).all()
+    correct_count = sum(1 for a in answers if a.is_correct)
+    unanswered_count = sum(1 for a in answers if not a.selected_answer)
+    incorrect_count = len(answers) - correct_count - unanswered_count
+    
+    question_details = []
+    for a in answers:
+        q = Question.query.get(a.question_id)
+        if q:
+            question_details.append({
+                'question_text': q.question_text,
+                'option_a': q.option_a,
+                'option_b': q.option_b,
+                'option_c': q.option_c,
+                'option_d': q.option_d,
+                'correct_answer': q.correct_answer,
+                'selected_answer': a.selected_answer,
+                'is_correct': a.is_correct,
+                'marks': q.marks
+            })
+            
+    return render_template(
+        'result.html',
+        attempt=attempt,
+        correct_count=correct_count,
+        incorrect_count=incorrect_count,
+        unanswered_count=unanswered_count,
+        question_details=question_details
+    )
 
 @app.route('/coding_questions')
 @student_required

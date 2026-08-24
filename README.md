@@ -103,7 +103,7 @@ Make sure you have a local MySQL instance running. The schema tables are initial
 - [x] MCQ assessment
 - [x] Timer
 - [x] Automatic evaluation
-- [ ] Result page
+- [x] Result page
 - [ ] Attempt history
 - [ ] Leaderboard
 - [ ] Coding questions
