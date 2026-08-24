@@ -428,7 +428,34 @@ def history():
 
 @app.route('/leaderboard')
 def leaderboard():
-    return jsonify({"message": "Leaderboard is under development (Work Item 9)."}), 200
+    leaderboard_data = db.session.query(
+        User.username,
+        db.func.max(AssessmentAttempt.percentage).label('max_pct'),
+        db.func.max(AssessmentAttempt.score).label('max_score')
+    ).join(AssessmentAttempt, User.id == AssessmentAttempt.user_id)\
+     .filter(User.role == 'student')\
+     .filter(AssessmentAttempt.submitted_at != None)\
+     .group_by(User.id)\
+     .order_by(db.desc('max_pct')).all()
+
+    rankings = []
+    current_rank = 0
+    prev_pct = None
+    count = 0
+    
+    for username, max_pct, max_score in leaderboard_data:
+        count += 1
+        if max_pct != prev_pct:
+            current_rank = count
+            prev_pct = max_pct
+        rankings.append({
+            'rank': current_rank,
+            'username': username,
+            'percentage': max_pct,
+            'score': max_score
+        })
+        
+    return render_template('leaderboard.html', rankings=rankings)
 
 @app.route('/health')
 def health_check():

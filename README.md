@@ -105,6 +105,6 @@ Make sure you have a local MySQL instance running. The schema tables are initial
 - [x] Automatic evaluation
 - [x] Result page
 - [x] Attempt history
-- [ ] Leaderboard
+- [x] Leaderboard
 - [ ] Coding questions
 - [ ] Testing
