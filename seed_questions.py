@@ -13,10 +13,13 @@ Usage:
 
 import sys
 import os
+from typing import Any, Dict, List
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Ensure the project root is on the path when running as a standalone script
+if os.path.dirname(os.path.abspath(__file__)) not in sys.path:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app import app
+from app import app  # type: ignore[import]
 from models import db, Question
 
 # ---------------------------------------------------------------------------
@@ -24,7 +27,7 @@ from models import db, Question
 # Topics: Python(5), Java(5), JavaScript(5), SQL(5), DSA(5),
 #         OOP(5), DBMS(4), OS(4), Computer Networks(4), HTML/CSS(4), SE(4)
 # ---------------------------------------------------------------------------
-QUESTIONS = [
+QUESTIONS: List[Dict[str, Any]] = [
     # ── Python (5) ──────────────────────────────────────────────────────────
     {
         "question_text": "What is the output of `type([])` in Python?",

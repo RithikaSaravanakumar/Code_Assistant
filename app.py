@@ -1,4 +1,5 @@
 import random
+from datetime import datetime, timezone
 from flask import Flask, jsonify, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -26,8 +27,6 @@ def internal_error(error):
         return render_template('errors/500.html'), 500
     except Exception:
         return jsonify({"error": "Internal server error", "code": 500}), 500
-
-from datetime import datetime
 
 @app.context_processor
 def inject_now():
@@ -262,7 +261,7 @@ def add_coding():
 @app.route('/admin/questions/edit/<int:question_id>', methods=['GET', 'POST'])
 @admin_required
 def edit_question(question_id):
-    question = Question.query.get_or_404(question_id)
+    question = db.get_or_404(Question, question_id)
     
     if request.method == 'POST':
         question.question_text = request.form.get('question_text', '').strip()
@@ -293,13 +292,12 @@ def edit_question(question_id):
 @app.route('/admin/questions/delete/<int:question_id>', methods=['POST'])
 @admin_required
 def delete_question(question_id):
-    question = Question.query.get_or_404(question_id)
+    question = db.get_or_404(Question, question_id)
     db.session.delete(question)
     db.session.commit()
     flash('Question deleted successfully!', 'success')
     return redirect(url_for('admin_dashboard'))
 
-from datetime import timezone
 
 @app.route('/take_assessment')
 @student_required
@@ -395,7 +393,7 @@ def submit_assessment():
         flash('Invalid attempt ID.', 'danger')
         return redirect(url_for('dashboard'))
 
-    attempt = AssessmentAttempt.query.get(attempt_id)
+    attempt = db.session.get(AssessmentAttempt, attempt_id)
     if not attempt or attempt.submitted_at is not None:
         flash('This assessment attempt has already been submitted or is invalid.', 'warning')
         return redirect(url_for('dashboard'))
@@ -438,7 +436,7 @@ def submit_assessment():
 @app.route('/result/<int:attempt_id>')
 @login_required
 def result(attempt_id):
-    attempt = AssessmentAttempt.query.get_or_404(attempt_id)
+    attempt = db.get_or_404(AssessmentAttempt, attempt_id)
 
     # Security check: only own attempt or admin
     if session.get('role') != 'admin' and attempt.user_id != session.get('user_id'):
@@ -503,7 +501,7 @@ def coding_questions():
 @app.route('/coding_questions/<int:question_id>')
 @student_required
 def coding_question(question_id):
-    question = Question.query.get_or_404(question_id)
+    question = db.get_or_404(Question, question_id)
     if question.question_type != 'coding':
         flash('Invalid coding challenge.', 'danger')
         return redirect(url_for('coding_questions'))
@@ -517,7 +515,7 @@ def coding_question(question_id):
 @app.route('/coding_questions/<int:question_id>/submit', methods=['POST'])
 @student_required
 def submit_coding(question_id):
-    question = Question.query.get_or_404(question_id)
+    question = db.get_or_404(Question, question_id)
     if question.question_type != 'coding':
         flash('Invalid coding challenge.', 'danger')
         return redirect(url_for('coding_questions'))
@@ -544,7 +542,7 @@ def submit_coding(question_id):
 def history():
     user_id = session['user_id']
     attempts = AssessmentAttempt.query.filter_by(user_id=user_id)\
-                                       .filter(AssessmentAttempt.submitted_at != None)\
+                                       .filter(AssessmentAttempt.submitted_at.isnot(None))\
                                        .order_by(AssessmentAttempt.submitted_at.desc()).all()
     return render_template('history.html', attempts=attempts)
 
@@ -556,7 +554,7 @@ def leaderboard():
         db.func.max(AssessmentAttempt.score).label('max_score')
     ).join(AssessmentAttempt, User.id == AssessmentAttempt.user_id)\
      .filter(User.role == 'student')\
-     .filter(AssessmentAttempt.submitted_at != None)\
+     .filter(AssessmentAttempt.submitted_at.isnot(None))\
      .group_by(User.id)\
      .order_by(db.desc('max_pct')).all()
 
