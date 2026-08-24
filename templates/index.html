@@ -1,49 +1,53 @@
 {% extends "base.html" %}
 
-{% block title %}Welcome - CodeEval Coding Assessment Platform{% endblock %}
+{% block title %}ZeCode - Next-Gen Code Evaluation & Skills Benchmark{% endblock %}
 
 {% block content %}
 <div class="hero-section">
-    <h1 class="hero-title">Evaluate Your Coding Skills Instantly</h1>
-    <p class="hero-subtitle">Participate in assessments, solve coding challenges, test your MCQ knowledge, and benchmark your progress on our live leaderboard.</p>
+    <div class="hero-badge">
+        <span>⚡</span> Powered by ZeAI Soft
+    </div>
+    <h1 class="hero-title">Master Algorithms. Benchmark Engineering Skills.</h1>
+    <p class="hero-subtitle">Step into a luxury engineering assessment environment. Solve algorithm challenges in real-time execution environments, master technical MCQs, and climb the live global leaderboard.</p>
     
     <div class="hero-actions">
         {% if session.get('user_id') %}
             {% if session.get('role') == 'admin' %}
-                <a href="/admin/dashboard" class="btn btn-primary btn-lg">Go to Admin Dashboard</a>
+                <a href="/admin/dashboard" class="btn btn-primary btn-lg">Admin Control Center</a>
             {% else %}
-                <a href="/dashboard" class="btn btn-primary btn-lg">Go to Student Dashboard</a>
+                <a href="/coding_questions" class="btn btn-primary btn-lg">Explore Coding Challenges</a>
+                <a href="/dashboard" class="btn btn-secondary btn-lg">Student Dashboard</a>
             {% endif %}
         {% else %}
-            <a href="/register" class="btn btn-primary btn-lg">Create Student Account</a>
-            <a href="/login" class="btn btn-secondary btn-lg">Sign In</a>
+            <a href="/register" class="btn btn-primary btn-lg">Get Started Free &rarr;</a>
+            <a href="/login" class="btn btn-secondary btn-lg">Sign In to ZeCode</a>
         {% endif %}
     </div>
 </div>
 
 <div class="features-grid">
     <div class="feature-card">
-        <div class="feature-icon">📝</div>
-        <h3>MCQ Assessments</h3>
-        <p>Multiple-choice questions with automatic evaluation, timed attempts, and detailed metrics on performance.</p>
+        <div class="feature-icon">⚡</div>
+        <h3>ZeCode Assessment Engine</h3>
+        <p>Run student solutions in high-performance execution environments with instant test case verification and complexity metrics.</p>
     </div>
     
     <div class="feature-card">
         <div class="feature-icon">💻</div>
-        <h3>Coding Module</h3>
-        <p>Write, structure, and save your solutions for complex algorithm and coding problems directly in the browser.</p>
+        <h3>Interactive Code Workspace</h3>
+        <p>Integrated code editor featuring multi-language starter templates, intelligent syntax highlighting, and state persistence.</p>
     </div>
     
     <div class="feature-card">
         <div class="feature-icon">⏱️</div>
-        <h3>Timed Attempts</h3>
-        <p>Simulate real interview conditions with a robust JavaScript-powered test timer that auto-submits when time expires.</p>
+        <h3>Timed Assessments</h3>
+        <p>Real-world interview simulation with synchronized server-side expiration and resilient countdown timers.</p>
     </div>
     
     <div class="feature-card">
         <div class="feature-icon">🏆</div>
-        <h3>Live Leaderboard</h3>
-        <p>Compare scores with peers instantly and track rankings sorted by evaluation performance.</p>
+        <h3>Live Global Leaderboard</h3>
+        <p>Dynamic ranking engine ranking students by score accuracy, attempt efficiency, and algorithmic speed.</p>
     </div>
 </div>
 {% endblock %}

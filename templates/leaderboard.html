@@ -1,52 +1,49 @@
 {% extends "base.html" %}
 
-{% block title %}Leaderboard - CodeEval{% endblock %}
+{% block title %}Leaderboard - ZeCode{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 32px;">
-    <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 4px;">Global Leaderboard</h1>
-    <p style="color: var(--text-secondary);">Benchmark your maximum performance score against other students.</p>
+<div style="margin-bottom: 36px;">
+    <h1 style="font-size: 34px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.5px;">Global Leaderboard</h1>
+    <p style="color: var(--text-secondary); font-size: 15px;">Benchmark your top performance score against engineers on ZeCode.</p>
 </div>
 
-<div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--shadow-lg); margin-bottom: 60px;">
+<div class="table-container">
     {% if rankings %}
         <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 15px;">
+            <table class="ze-table">
                 <thead>
-                    <tr style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
-                        <th style="padding: 18px 24px; font-weight: 600; width: 120px;">Rank</th>
-                        <th style="padding: 18px 24px; font-weight: 600;">Student Username</th>
-                        <th style="padding: 18px 24px; font-weight: 600; text-align: center;">Best Score</th>
-                        <th style="padding: 18px 24px; font-weight: 600; text-align: right;">Percentage</th>
+                    <tr>
+                        <th style="width: 140px;">Rank</th>
+                        <th>Student Username</th>
+                        <th style="text-align: center;">Best Score</th>
+                        <th style="text-align: right;">Percentage</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for row in rankings %}
-                        <tr style="border-bottom: 1px solid var(--border-color); transition: var(--transition-fast);
-                            {% if row.rank == 1 %}
-                                background-color: rgba(245, 158, 11, 0.03);
-                            {% endif %}">
-                            <td style="padding: 18px 24px; font-weight: 700;">
+                        <tr class="{% if row.rank == 1 %}rank-gold{% elif row.rank == 2 %}rank-silver{% elif row.rank == 3 %}rank-bronze{% endif %}">
+                            <td style="font-weight: 800;">
                                 {% if row.rank == 1 %}
-                                    <span style="font-size: 18px; margin-right: 4px;">🥇</span> <span style="color: #fbbf24;">1</span>
+                                    <span style="font-size: 20px; margin-right: 6px;">🥇</span> <span class="rank-badge-gold">#1</span>
                                 {% elif row.rank == 2 %}
-                                    <span style="font-size: 18px; margin-right: 4px;">🥈</span> <span style="color: #9ca3af;">2</span>
+                                    <span style="font-size: 20px; margin-right: 6px;">🥈</span> <span class="rank-badge-silver">#2</span>
                                 {% elif row.rank == 3 %}
-                                    <span style="font-size: 18px; margin-right: 4px;">🥉</span> <span style="color: #b45309;">3</span>
+                                    <span style="font-size: 20px; margin-right: 6px;">🥉</span> <span class="rank-badge-bronze">#3</span>
                                 {% else %}
-                                    <span style="color: var(--text-secondary); margin-left: 8px;">{{ row.rank }}</span>
+                                    <span style="color: var(--text-muted); margin-left: 8px;">#{{ row.rank }}</span>
                                 {% endif %}
                             </td>
-                            <td style="padding: 18px 24px; font-weight: 600; color: var(--text-primary);">
+                            <td style="font-weight: 700; color: #FFFFFF;">
                                 {{ row.username }}
                                 {% if session.get('username') == row.username %}
-                                    <span style="font-size: 11px; font-weight: 700; background-color: var(--primary-light); color: #a5b4fc; padding: 2px 6px; border-radius: 4px; margin-left: 8px; text-transform: uppercase;">You</span>
+                                    <span class="badge-you">You</span>
                                 {% endif %}
                             </td>
-                            <td style="padding: 18px 24px; text-align: center; color: var(--text-secondary);">
+                            <td style="text-align: center; color: var(--text-secondary); font-weight: 600;">
                                 {{ row.score }} Marks
                             </td>
-                            <td style="padding: 18px 24px; text-align: right; font-weight: 700; color: var(--primary);">
+                            <td style="text-align: right; font-weight: 800; color: var(--primary);">
                                 {{ "%.1f"|format(row.percentage) }}%
                             </td>
                         </tr>
@@ -55,10 +52,10 @@
             </table>
         </div>
     {% else %}
-        <div style="padding: 60px 24px; text-align: center; color: var(--text-secondary);">
-            <div style="font-size: 48px; margin-bottom: 16px;">🏆</div>
-            <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">No Standings Yet</h3>
-            <p style="font-size: 14px;">The leaderboard will populate once students start submitting assessment attempts.</p>
+        <div style="padding: 72px 24px; text-align: center; color: var(--text-secondary);">
+            <div style="font-size: 54px; margin-bottom: 18px; filter: drop-shadow(0 0 16px rgba(139, 92, 246, 0.4));">🏆</div>
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #FFFFFF;">No Standings Recorded</h3>
+            <p style="font-size: 14.5px; max-width: 440px; margin: 0 auto;">The leaderboard will populate as soon as students complete assessments or submit coding solutions.</p>
         </div>
     {% endif %}
 </div>

@@ -21,7 +21,7 @@
         c: 'c',
     };
 
-    const STORAGE_KEY = `codeeval_q${questionId}`;
+    const STORAGE_KEY = `zecode_q${questionId}`;
 
     let editor = null;
     let currentLanguage = 'python';
@@ -104,15 +104,29 @@
             const item = document.createElement('div');
             let cls = 'pending';
             let icon = '⏳';
-            if (r.passed === true) { cls = 'passed'; icon = '✓'; }
-            else if (r.passed === false) { cls = 'failed'; icon = '✗'; }
-            else if (r.status === 'not_executed') { cls = 'pending'; icon = '○'; }
+            let statusLabel = 'Not Executed';
+
+            if (r.passed === true) {
+                cls = 'passed';
+                icon = '✓';
+                statusLabel = 'Passed';
+            } else if (r.passed === false) {
+                cls = 'failed';
+                icon = '✗';
+                if (r.status === 'Time Limit Exceeded') {
+                    statusLabel = 'Time Limit Exceeded';
+                } else if (r.status === 'Runtime Error') {
+                    statusLabel = 'Runtime Error';
+                } else {
+                    statusLabel = 'Failed';
+                }
+            }
 
             item.className = `test-result-item ${cls}`;
             item.innerHTML = `
                 <div class="test-result-header">
                     <span>Test Case ${i + 1}${r.is_sample ? ' (Sample)' : ''}</span>
-                    <span>${icon} ${r.passed === true ? 'Passed' : r.passed === false ? 'Failed' : 'Not Executed'}</span>
+                    <span class="status-badge status-${cls}">${icon} ${statusLabel}</span>
                 </div>
                 <div class="test-result-detail">
                     <div><strong>Input</strong><pre>${escapeHtml(r.input_data)}</pre></div>

@@ -1,60 +1,63 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - CodeEval{% endblock %}
+{% block title %}Dashboard - ZeCode{% endblock %}
 
 {% block content %}
-<div class="dashboard-header" style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center;">
+<div class="dashboard-header" style="margin-bottom: 36px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
     <div>
-        <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 4px;">Welcome back, {{ session.get('username') }}!</h1>
-        <p style="color: var(--text-secondary);">Here is your performance snapshot and available actions.</p>
+        <h1 style="font-size: 34px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.5px;">Welcome back, <span style="background: linear-gradient(135deg, #FFFFFF, var(--accent-lilac)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{{ session.get('username') }}</span>!</h1>
+        <p style="color: var(--text-secondary); font-size: 15px;">Your engineering performance snapshot and learning dashboard.</p>
+    </div>
+    <div>
+        <a href="/coding_questions" class="btn btn-primary btn-sm">Solve Problems &rarr;</a>
     </div>
 </div>
 
-<div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px;">
-    <div class="stat-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 24px; text-align: center;">
-        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Assessments Taken</div>
-        <div style="font-size: 36px; font-weight: 700; color: var(--primary);">{{ attempts_count }}</div>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">MCQ Assessments</div>
+        <div class="stat-value" style="color: var(--primary);">{{ attempts_count }}</div>
     </div>
-    <div class="stat-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 24px; text-align: center;">
-        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Average Score</div>
-        <div style="font-size: 36px; font-weight: 700; color: var(--success);">{{ "%.1f"|format(avg_score) }}%</div>
+    <div class="stat-card">
+        <div class="stat-label">Average Score</div>
+        <div class="stat-value" style="color: var(--success);">{{ "%.1f"|format(avg_score) }}%</div>
     </div>
-    <div class="stat-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 24px; text-align: center;">
-        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Global Rank</div>
-        <div style="font-size: 36px; font-weight: 700; color: var(--warning);">#{{ rank if rank else 'N/A' }}</div>
+    <div class="stat-card">
+        <div class="stat-label">Global Rank</div>
+        <div class="stat-value" style="color: var(--warning);">#{{ rank if rank else 'N/A' }}</div>
     </div>
 </div>
 
-<h2 style="font-size: 22px; font-weight: 600; margin-bottom: 20px;">Platform Quick Links</h2>
+<h2 style="font-size: 22px; font-weight: 700; margin-bottom: 22px; color: #FFFFFF;">Quick Navigation</h2>
 <div class="features-grid" style="margin-top: 0;">
-    <a href="/take_assessment" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
-        <div class="feature-icon">📝</div>
-        <h3>Take Assessment</h3>
-        <p>Start a new evaluation containing MCQ questions with real-time scoring.</p>
-    </a>
-    
     <a href="/coding_questions" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
         <div class="feature-icon">💻</div>
         <h3>Coding Problems</h3>
-        <p>Solve problems in a HackerRank-style editor with Run and Submit.</p>
+        <p>Solve algorithm challenges in the ZeCode execution environment with instant evaluation.</p>
     </a>
 
+    <a href="/take_assessment" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
+        <div class="feature-icon">📝</div>
+        <h3>MCQ Assessment</h3>
+        <p>Start a randomized multiple-choice evaluation with real-time scoring and answer breakdown.</p>
+    </a>
+    
     <a href="/coding_history" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
         <div class="feature-icon">📋</div>
-        <h3>Coding History</h3>
-        <p>Review your coding submissions, scores, and past solutions.</p>
+        <h3>Coding Submissions</h3>
+        <p>Review past code submissions, test case metrics, runtime execution logs, and verdicts.</p>
     </a>
     
     <a href="/history" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
         <div class="feature-icon">⏱️</div>
-        <h3>Attempt History</h3>
-        <p>Review past assessment scores, percentages, and question results.</p>
+        <h3>Assessment History</h3>
+        <p>Review MCQ examination attempts, percentages, and question-level performance summaries.</p>
     </a>
     
     <a href="/leaderboard" class="feature-card" style="text-decoration: none; color: inherit; display: block;">
         <div class="feature-icon">🏆</div>
-        <h3>Leaderboard</h3>
-        <p>Check the global rankings of participants and see who's leading.</p>
+        <h3>Live Leaderboard</h3>
+        <p>Check the global standings of peers and benchmark your rankings across ZeCode.</p>
     </a>
 </div>
 {% endblock %}

@@ -875,31 +875,70 @@ def history():
 
 @app.route('/leaderboard')
 def leaderboard():
-    leaderboard_data = db.session.query(
-        User.username,
-        db.func.max(AssessmentAttempt.percentage).label('max_pct'),
-        db.func.max(AssessmentAttempt.score).label('max_score')
-    ).join(AssessmentAttempt, User.id == AssessmentAttempt.user_id)\
-     .filter(User.role == 'student')\
-     .filter(AssessmentAttempt.submitted_at.isnot(None))\
-     .group_by(User.id)\
-     .order_by(db.desc('max_pct')).all()
+    students = User.query.filter_by(role='student').all()
+    user_stats = []
+
+    for student in students:
+        attempts = AssessmentAttempt.query.filter_by(user_id=student.id)\
+                                          .filter(AssessmentAttempt.submitted_at.isnot(None))\
+                                          .all()
+        coding_subs = CodingSubmission.query.filter_by(user_id=student.id, is_run=False).all()
+
+        if not attempts and not coding_subs:
+            continue
+
+        # Total scores and accurate weighted percentage
+        total_mcq_score = sum(a.score for a in attempts)
+        total_mcq_marks = sum(a.total_marks for a in attempts)
+        
+        # Coding submissions score (highest score per question)
+        coding_by_q = {}
+        for s in coding_subs:
+            if s.question_id not in coding_by_q or s.score > coding_by_q[s.question_id]:
+                coding_by_q[s.question_id] = s.score
+        total_coding_score = sum(coding_by_q.values())
+
+        # Total score earned across both modules
+        total_score = total_mcq_score + total_coding_score
+
+        # Accurate percentage calculation avoiding hardcoded 100%
+        if total_mcq_marks > 0:
+            percentage = round((total_mcq_score / total_mcq_marks) * 100, 1)
+        elif coding_subs:
+            total_possible_coding = sum(q.marks for q in CodingQuestion.query.all()) or 100
+            percentage = round((total_coding_score / total_possible_coding) * 100, 1)
+        else:
+            percentage = 0.0
+
+        user_stats.append({
+            'username': student.username,
+            'score': round(total_score, 1),
+            'percentage': min(100.0, max(0.0, percentage)),
+            'attempts_count': len(attempts),
+            'coding_count': len(coding_by_q),
+        })
+
+    # Sort by total score descending, then percentage descending
+    user_stats.sort(key=lambda x: (x['score'], x['percentage']), reverse=True)
 
     rankings = []
     current_rank = 0
-    prev_pct = None
+    prev_key = None
     count = 0
 
-    for username, max_pct, max_score in leaderboard_data:
+    for item in user_stats:
         count += 1
-        if max_pct != prev_pct:
+        key = (item['score'], item['percentage'])
+        if key != prev_key:
             current_rank = count
-            prev_pct = max_pct
+            prev_key = key
         rankings.append({
             'rank': current_rank,
-            'username': username,
-            'percentage': max_pct,
-            'score': max_score
+            'username': item['username'],
+            'percentage': item['percentage'],
+            'score': int(item['score']) if isinstance(item['score'], float) and item['score'].is_integer() else item['score'],
+            'attempts_count': item['attempts_count'],
+            'coding_count': item['coding_count'],
         })
 
     return render_template('leaderboard.html', rankings=rankings)

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Coding Problems - CodeEval{% endblock %}
+{% block title %}Coding Problems - ZeCode{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/coding.css') }}">
@@ -9,21 +9,21 @@
 {% block content %}
 <div class="coding-list-header">
     <div>
-        <h1>Coding Challenges</h1>
-        <p class="subtitle">Solve algorithm problems in a HackerRank-style coding environment.</p>
+        <h1>Algorithm Challenges</h1>
+        <p class="subtitle">Solve problem sets inside the ZeCode Assessment Engine.</p>
     </div>
     {% if timed_session %}
     <div class="timed-session-banner">
-        <span>Timed assessment active</span>
+        <span>⏱️ Timed Assessment Active</span>
         <form action="{{ url_for('end_coding_assessment') }}" method="POST" style="display:inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <button type="submit" class="btn btn-danger btn-sm">End Session</button>
+            <button type="submit" class="btn btn-danger btn-sm">End Assessment</button>
         </form>
     </div>
     {% else %}
     <form action="{{ url_for('start_coding_assessment') }}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button type="submit" class="btn btn-primary">Start Timed Assessment (60 min)</button>
+        <button type="submit" class="btn btn-primary">Start Timed Session (60m) &rarr;</button>
     </form>
     {% endif %}
 </div>
@@ -39,16 +39,16 @@
             <h3>{{ q.title }}</h3>
             <p>{{ q.description[:120] }}{% if q.description|length > 120 %}...{% endif %}</p>
             <div class="card-footer">
-                <span>Time: {{ q.expected_time_complexity }}</span>
+                <span>⚡ Time Complexity: {{ q.expected_time_complexity }}</span>
                 <span class="solve-link">Solve &rarr;</span>
             </div>
         </a>
         {% endfor %}
     {% else %}
-        <div class="empty-state">
-            <div class="empty-icon">💻</div>
-            <h3>No Challenges Available</h3>
-            <p>Run <code>python seed_coding_questions.py</code> to populate coding problems.</p>
+        <div class="empty-state" style="grid-column: 1 / -1; padding: 60px; text-align: center; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg);">
+            <div style="font-size: 48px; margin-bottom: 16px;">💻</div>
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">No Challenges Found</h3>
+            <p style="color: var(--text-secondary);">Populate coding questions from the Admin Console to get started.</p>
         </div>
     {% endif %}
 </div>

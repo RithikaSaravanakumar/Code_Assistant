@@ -3,32 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Online Assessment Platform{% endblock %}</title>
+    <title>{% block title %}ZeCode - Next-Gen Coding & Assessment Platform{% endblock %}</title>
+    <meta name="description" content="ZeCode is a premium engineering assessment platform for coding challenges, MCQ evaluations, and live leaderboard rankings.">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     {% block head %}{% endblock %}
 </head>
 <body>
     <header class="navbar">
         <div class="navbar-container">
             <a href="/" class="logo">
-                <span class="logo-accent">Code</span>Eval
+                <img src="{{ url_for('static', filename='z.png') }}" class="logo-img" alt="ZeCode Logo">
+                <span class="logo-text">ZeCode</span>
             </a>
             <nav class="nav-links">
                 <a href="/" class="nav-link">Home</a>
+                <a href="/coding_questions" class="nav-link">Problems</a>
                 <a href="/leaderboard" class="nav-link">Leaderboard</a>
                 {% if session.get('user_id') %}
                     {% if session.get('role') == 'admin' %}
-                        <a href="/admin/dashboard" class="nav-link btn-secondary">Admin Console</a>
+                        <a href="/admin/dashboard" class="btn btn-secondary btn-sm">Admin Console</a>
                     {% else %}
-                        <a href="/dashboard" class="nav-link btn-secondary">Dashboard</a>
+                        <a href="/dashboard" class="btn btn-secondary btn-sm">Dashboard</a>
                     {% endif %}
-                    <a href="/logout" class="nav-link btn-primary">Logout</a>
+                    <a href="/logout" class="btn btn-primary btn-sm">Logout</a>
                 {% else %}
                     <a href="/login" class="nav-link">Login</a>
-                    <a href="/register" class="nav-link btn-primary">Get Started</a>
+                    <a href="/register" class="btn btn-primary btn-sm">Get Started</a>
                 {% endif %}
             </nav>
         </div>
@@ -42,7 +45,7 @@
                     <div class="flash-messages">
                         {% for category, message in messages %}
                             <div class="flash-message flash-{{ category }}">
-                                {{ message }}
+                                <span>{{ message }}</span>
                             </div>
                         {% endfor %}
                     </div>
@@ -55,10 +58,53 @@
 
     <footer class="footer">
         <div class="footer-container">
-            <p>&copy; {{ datetime_now.year if datetime_now else 2026 }} CodeEval Assessment Platform. All rights reserved.</p>
+            <p>&copy; 2026 <strong style="color: var(--accent-lilac);">ZeCode</strong> Assessment Platform. Powered by <a href="https://zeaisoft.com" target="_blank" rel="noopener" class="footer-brand-link">ZeAI Soft</a>. All rights reserved.</p>
         </div>
     </footer>
 
+    <!-- Global Motion Engine: Scroll Reveal + Card Pop + Radiant Light Tracking -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Scroll-triggered card pop with staggered entrances ---
+            const animTargets = document.querySelectorAll(
+                '.feature-card, .stat-card, .coding-problem-card, .table-container, ' +
+                '.form-card, .submission-result-card, .hero-section, .recent-submissions, ' +
+                '.form-card-wide, .admin-section, .result-container, .assessment-container'
+            );
+
+            animTargets.forEach((el, index) => {
+                el.classList.add('reveal-on-scroll');
+                el.classList.add(`stagger-${(index % 6) + 1}`);
+            });
+
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.06,
+                rootMargin: '0px 0px -30px 0px'
+            });
+
+            document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+
+            // --- Radiant light hover effect on glassmorphic cards ---
+            const radiantCards = document.querySelectorAll(
+                '.feature-card, .stat-card, .coding-problem-card, .form-card, .submission-result-card'
+            );
+
+            radiantCards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                    card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                });
+            });
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
